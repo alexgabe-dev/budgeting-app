@@ -10,6 +10,7 @@ export interface Transaction {
   tags?: string[]
   notes?: string
   userId?: number
+  budgetRuleId?: number
   createdAt: Date
   updatedAt: Date
 }
@@ -56,6 +57,17 @@ export interface DataBackup {
   createdAt: Date
 }
 
+export interface BudgetRule {
+  id?: number
+  name: string
+  percentage: number
+  color: string
+  icon: string
+  userId?: number
+  createdAt: Date
+  updatedAt: Date
+}
+
 export interface User {
   id?: number
   email: string
@@ -73,17 +85,21 @@ export class BudgetDatabase extends Dexie {
   appSettings!: Table<AppSettings>
   dataBackups!: Table<DataBackup>
   users!: Table<User>
+  budgetRules!: Table<BudgetRule>
+  
+  private _isResetting: boolean = false
 
   constructor() {
     super("Lumo")
 
-    this.version(5).stores({
-      transactions: "++id, description, amount, category, date, type, userId, createdAt, updatedAt",
+    this.version(6).stores({
+      transactions: "++id, description, amount, category, date, type, userId, budgetRuleId, createdAt, updatedAt",
       budgets: "++id, category, amount, period, isActive, userId, createdAt, updatedAt",
       categories: "++id, name, type, isDefault, userId, createdAt, updatedAt, [name+type]",
       appSettings: "++id, key, type, updatedAt",
       dataBackups: "++id, name, version, createdAt",
-      users: "++id, email, isActive, createdAt, updatedAt"
+      users: "++id, email, isActive, createdAt, updatedAt",
+      budgetRules: "++id, name, percentage, color, icon, userId, createdAt, updatedAt"
     })
 
     this.on("ready", () => {
@@ -96,9 +112,13 @@ export class BudgetDatabase extends Dexie {
     await this.initializeDefaultCategories()
     await this.initializeDefaultSettings()
     await this.initializeDefaultUsers()
+    await this.initializeDefaultBudgetRules()
     await this.migrateExistingData()
     await this.cleanupExistingDemoData()
-    await this.initializeDemoData()
+    
+    // Demo data initialization is now completely disabled
+    // This prevents demo data from being added after database resets
+    console.log("Demo data initialization disabled to prevent reset issues")
   }
 
   private async initializeDefaultCategories() {
@@ -260,6 +280,43 @@ export class BudgetDatabase extends Dexie {
     }
   }
 
+  private async initializeDefaultBudgetRules() {
+    const count = await this.budgetRules.count()
+    if (count === 0) {
+      const defaultBudgetRules: Omit<BudgetRule, "id">[] = [
+        {
+          name: "Needs",
+          percentage: 50,
+          color: "#FF6B6B",
+          icon: "Home",
+          userId: null, // Available to all users
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        {
+          name: "Wants",
+          percentage: 30,
+          color: "#4ECDC4",
+          icon: "ShoppingBag",
+          userId: null, // Available to all users
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        {
+          name: "Savings",
+          percentage: 20,
+          color: "#96CEB4",
+          icon: "PiggyBank",
+          userId: null, // Available to all users
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ]
+
+      await this.budgetRules.bulkAdd(defaultBudgetRules)
+    }
+  }
+
   private async cleanupExistingDemoData() {
     try {
       // Get demo user
@@ -330,9 +387,10 @@ export class BudgetDatabase extends Dexie {
   }
 
   private async initializeDemoData() {
-    // Check if demo data already exists
-    const existingDemoTransactions = await this.transactions.where("description").startsWith("Demo").count()
-    if (existingDemoTransactions > 0) return // Demo data already exists
+    // This function is now disabled to prevent demo data from being added
+    // after database resets
+    console.log("Demo data initialization is disabled")
+    return
 
     // Get the demo user ID
     const demoUser = await this.users.where("email").equals("demo@lumo.app").first()
@@ -1385,6 +1443,9 @@ export class BudgetDatabase extends Dexie {
       // Clear each table individually with error handling
       console.log("Starting to clear all data...")
       
+      // Set a flag to prevent demo data initialization
+      this._isResetting = true
+      
       try {
         await this.transactions.clear()
         console.log("✓ Transactions cleared")
@@ -1413,6 +1474,8 @@ export class BudgetDatabase extends Dexie {
         console.warn("Failed to clear app settings:", error)
       }
       
+      // Demo data is now permanently disabled
+      
       try {
         await this.dataBackups.clear()
         console.log("✓ Backups cleared")
@@ -1420,26 +1483,54 @@ export class BudgetDatabase extends Dexie {
         console.warn("Failed to clear backups:", error)
       }
       
-      // Re-initialize default data after clearing
+      try {
+        await this.budgetRules.clear()
+        console.log("✓ Budget rules cleared")
+      } catch (error) {
+        console.warn("Failed to clear budget rules:", error)
+      }
+      
+      try {
+        await this.users.clear()
+        console.log("✓ Users cleared")
+      } catch (error) {
+        console.warn("Failed to clear users:", error)
+      }
+      
+      // Re-initialize default data after clearing (but NOT demo data)
       console.log("Re-initializing default data...")
       await this.initializeDefaultCategories()
       await this.initializeDefaultSettings()
-      console.log("✓ Default data re-initialized")
+      await this.initializeDefaultUsers()
+      await this.initializeDefaultBudgetRules()
+      // Note: We deliberately do NOT call initializeDemoData() here
+      console.log("✓ Default data re-initialized (demo data excluded)")
+      
+      // Verify the clear was successful
+      const finalStats = await this.getDatabaseStats()
+      console.log("Final database stats after clear:", finalStats)
       
       console.log("✓ All data cleared and re-initialized successfully")
+      
+      // Reset the flag
+      this._isResetting = false
     } catch (error) {
       console.error("Failed to clear all data:", error)
+      // Reset the flag even on error
+      this._isResetting = false
       throw new Error(`Failed to clear database: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
   }
 
   async getDatabaseStats() {
-    const [transactions, budgets, categories, appSettings, backups, userCategories] = await Promise.all([
+    const [transactions, budgets, categories, appSettings, backups, users, budgetRules, userCategories] = await Promise.all([
       this.transactions.count(),
       this.budgets.count(),
       this.categories.count(),
       this.appSettings.count(),
       this.dataBackups.count(),
+      this.users.count(),
+      this.budgetRules.count(),
       this.categories.filter(cat => !cat.isDefault).count()
     ])
 
@@ -1449,6 +1540,8 @@ export class BudgetDatabase extends Dexie {
       categories: userCategories, // Only show user-created categories
       appSettings: appSettings, // Keep settings count as it's useful
       backups,
+      users,
+      budgetRules,
       totalCategories: categories, // Total categories including defaults
       defaultCategories: categories - userCategories // Default categories count
     }

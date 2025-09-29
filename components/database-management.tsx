@@ -38,11 +38,13 @@ export function DatabaseManagement() {
   const [isLoading, setIsLoading] = useState(false)
   const [showCreateBackup, setShowCreateBackup] = useState(false)
   const [showRestoreDialog, setShowRestoreDialog] = useState(false)
+  const [showResetDialog, setShowResetDialog] = useState(false)
   const [selectedBackup, setSelectedBackup] = useState<Backup | null>(null)
   const [backupForm, setBackupForm] = useState({
     name: "",
     description: ""
   })
+  const [resetConfirmation, setResetConfirmation] = useState("")
   const [alert, setAlert] = useState<{ type: "success" | "error" | "warning", message: string } | null>(null)
 
   useEffect(() => {
@@ -52,7 +54,9 @@ export function DatabaseManagement() {
 
   const loadStats = async () => {
     try {
+      console.log("Loading database stats...")
       const databaseStats = await DatabaseManager.getStats()
+      console.log("Database stats loaded:", databaseStats)
       setStats(databaseStats)
     } catch (error) {
       console.error("Failed to load database stats:", error)
@@ -177,15 +181,35 @@ export function DatabaseManagement() {
     }
   }
 
-  const handleClearAllData = async () => {
-    if (!window.confirm("Are you sure you want to clear ALL data? This action cannot be undone!")) return
+  const handleClearAllData = () => {
+    setShowResetDialog(true)
+  }
+
+  const handleConfirmReset = async () => {
+    if (resetConfirmation.toLowerCase() !== "accept") {
+      showAlert("error", "Please type 'accept' to confirm the database reset")
+      return
+    }
 
     setIsLoading(true)
     try {
       const result = await DatabaseManager.clearAllData()
+      
+      // Show success message immediately
+      showAlert("success", result.message || "All data cleared successfully")
+      setShowResetDialog(false)
+      setResetConfirmation("")
+      
+      // Wait for the database operations to complete
+      await new Promise(resolve => setTimeout(resolve, 1500))
+      
+      // Force reload stats and backups to show updated counts
       await loadStats()
       await loadBackups()
-      showAlert("success", result.message || "All data cleared successfully")
+      
+      // Show the updated stats for a moment before reloading
+      await new Promise(resolve => setTimeout(resolve, 2000))
+      
       // Reload the page to refresh all store states
       window.location.reload()
     } catch (error) {
@@ -206,18 +230,22 @@ export function DatabaseManagement() {
         </Alert>
       )}
 
+
       {/* Database Stats */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Database className="h-5 w-5" />
             <span>Database Statistics</span>
+            {isLoading && <RefreshCw className="h-4 w-4 animate-spin" />}
           </CardTitle>
-          <CardDescription>Overview of your data</CardDescription>
+          <CardDescription>
+            {isLoading ? "Updating statistics..." : "Overview of your data"}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {stats ? (
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div className={`grid grid-cols-2 md:grid-cols-5 gap-4 ${isLoading ? 'opacity-50' : ''}`}>
               <div className="text-center">
                 <div className="text-2xl font-bold text-foreground">{stats.transactions}</div>
                 <div className="text-sm text-muted-foreground">Transactions</div>
@@ -236,6 +264,14 @@ export function DatabaseManagement() {
               <div className="text-center">
                 <div className="text-2xl font-bold text-foreground">{stats.appSettings}</div>
                 <div className="text-sm text-muted-foreground">Settings</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-foreground">{stats.users}</div>
+                <div className="text-sm text-muted-foreground">Users</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-foreground">{stats.budgetRules}</div>
+                <div className="text-sm text-muted-foreground">Budget Rules</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-foreground">{stats.backups}</div>
@@ -287,6 +323,7 @@ export function DatabaseManagement() {
           </div>
         </CardContent>
       </Card>
+
 
       {/* Backup Management */}
       <Card>
@@ -460,6 +497,63 @@ export function DatabaseManagement() {
             <Button variant="destructive" onClick={handleRestoreBackup} disabled={isLoading}>
               {isLoading ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
               Restore Backup
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showResetDialog} onOpenChange={setShowResetDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2 text-destructive">
+              <AlertTriangle className="h-5 w-5" />
+              <span>Reset Database</span>
+            </DialogTitle>
+            <DialogDescription>
+              <div className="space-y-3">
+                <p className="font-medium text-destructive">
+                  ⚠️ This action will permanently delete ALL data in your database!
+                </p>
+                <p>This includes:</p>
+                <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground ml-4">
+                  <li>All transactions</li>
+                  <li>All categories</li>
+                  <li>All budgets</li>
+                  <li>All budget rules</li>
+                  <li>All user data</li>
+                </ul>
+                <p className="font-medium">This action cannot be undone!</p>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="resetConfirmation" className="text-sm font-medium">
+                Type <span className="font-mono bg-muted px-1 rounded">accept</span> to confirm:
+              </Label>
+              <Input
+                id="resetConfirmation"
+                value={resetConfirmation}
+                onChange={(e) => setResetConfirmation(e.target.value)}
+                placeholder="Type 'accept' to confirm"
+                className="font-mono"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setShowResetDialog(false)
+              setResetConfirmation("")
+            }}>
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleConfirmReset} 
+              disabled={isLoading || resetConfirmation.toLowerCase() !== "accept"}
+            >
+              {isLoading ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : <Trash2 className="h-4 w-4 mr-2" />}
+              {isLoading ? "Resetting..." : "Reset Database"}
             </Button>
           </DialogFooter>
         </DialogContent>

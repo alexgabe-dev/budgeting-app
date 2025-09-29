@@ -27,13 +27,16 @@ import {
   Plus,
   Trash2,
   Edit,
-  Database
+  Database,
+  Save,
+  X
 } from "lucide-react"
 import { useSettingsStore, CURRENCY_OPTIONS, formatCurrency } from "@/lib/settings-store"
 import { useTransactionStore } from "@/lib/store"
 import { useTheme } from "next-themes"
 import { motion } from "framer-motion"
 import { DatabaseManagement } from "@/components/database-management"
+import { BudgetRulesSettings } from "@/components/budget-rules-settings"
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme()
@@ -202,28 +205,32 @@ export default function SettingsPage() {
           </div>
 
           <Tabs defaultValue="general" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-6">
-              <TabsTrigger value="general" className="flex items-center space-x-2">
+            <TabsList className="grid w-full grid-cols-4 bg-muted/30 p-1 rounded-lg">
+              <TabsTrigger 
+                value="general" 
+                className="flex items-center space-x-2 data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:text-foreground data-[state=inactive]:text-muted-foreground transition-all duration-200 rounded-md"
+              >
                 <Settings className="h-4 w-4" />
                 <span>General</span>
               </TabsTrigger>
-              <TabsTrigger value="profile" className="flex items-center space-x-2">
-                <User className="h-4 w-4" />
-                <span>Profile</span>
-              </TabsTrigger>
-              <TabsTrigger value="currency" className="flex items-center space-x-2">
+              <TabsTrigger 
+                value="budgeting" 
+                className="flex items-center space-x-2 data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:text-foreground data-[state=inactive]:text-muted-foreground transition-all duration-200 rounded-md"
+              >
                 <DollarSign className="h-4 w-4" />
-                <span>Currency</span>
+                <span>Budgeting</span>
               </TabsTrigger>
-              <TabsTrigger value="categories" className="flex items-center space-x-2">
-                <Tag className="h-4 w-4" />
-                <span>Categories</span>
-              </TabsTrigger>
-              <TabsTrigger value="database" className="flex items-center space-x-2">
+              <TabsTrigger 
+                value="data" 
+                className="flex items-center space-x-2 data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:text-foreground data-[state=inactive]:text-muted-foreground transition-all duration-200 rounded-md"
+              >
                 <Database className="h-4 w-4" />
-                <span>Database</span>
+                <span>Data</span>
               </TabsTrigger>
-              <TabsTrigger value="notifications" className="flex items-center space-x-2">
+              <TabsTrigger 
+                value="notifications" 
+                className="flex items-center space-x-2 data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:text-foreground data-[state=inactive]:text-muted-foreground transition-all duration-200 rounded-md"
+              >
                 <Bell className="h-4 w-4" />
                 <span>Alerts</span>
               </TabsTrigger>
@@ -835,7 +842,322 @@ export default function SettingsPage() {
               </Card>
             </TabsContent>
 
-            <TabsContent value="database" className="space-y-6">
+            <TabsContent value="budgeting" className="space-y-6">
+              {/* Categories Section */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <Tag className="h-5 w-5" />
+                    <span>Category Management</span>
+                  </CardTitle>
+                  <CardDescription>Organize your transactions with custom categories</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Add Category Form */}
+                  <div className="border border-border rounded-lg p-4 space-y-4">
+                    <h4 className="font-medium">Add New Category</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <Label>Category Name</Label>
+                        <Input
+                          value={newCategoryName}
+                          onChange={(e) => setNewCategoryName(e.target.value)}
+                          placeholder="Enter category name"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Type</Label>
+                        <Select value={newCategoryType} onValueChange={(value: "expense" | "income") => setNewCategoryType(value)}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="expense">Expense</SelectItem>
+                            <SelectItem value="income">Income</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Color</Label>
+                        <div className="flex items-center space-x-2">
+                          <Input
+                            type="color"
+                            value={newCategoryColor}
+                            onChange={(e) => setNewCategoryColor(e.target.value)}
+                            className="w-12 h-10 p-1 border rounded"
+                          />
+                          <Input
+                            value={newCategoryColor}
+                            onChange={(e) => setNewCategoryColor(e.target.value)}
+                            placeholder="#000000"
+                            className="flex-1"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <Button 
+                      onClick={handleAddCategory} 
+                      disabled={!newCategoryName.trim()}
+                      className="w-full"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Category
+                    </Button>
+                  </div>
+
+                  {/* Categories List */}
+                  <div className="space-y-6">
+                    {/* Expense Categories */}
+                    <div className="space-y-4">
+                      <div className="flex items-center space-x-2">
+                        <Tag className="h-4 w-4 text-red-500" />
+                        <span className="font-medium text-red-500">Expense Categories</span>
+                        <Badge variant="secondary" className="ml-2">
+                          {categories.filter(c => c.type === "expense").length}
+                        </Badge>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {categories.filter(c => c.type === "expense").map((category) => (
+                          <motion.div
+                            key={category.id}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className={`border border-border rounded-lg p-4 space-y-3 ${editingCategory === category.id ? 'ring-2 ring-primary/20' : ''}`}
+                          >
+                            {editingCategory === category.id ? (
+                              // Edit Mode
+                              <div className="space-y-3">
+                                <div className="space-y-2">
+                                  <Label>Category Name</Label>
+                                  <Input
+                                    value={editCategoryName}
+                                    onChange={(e) => setEditCategoryName(e.target.value)}
+                                    placeholder="Enter category name"
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label>Type</Label>
+                                  <Select value={editCategoryType} onValueChange={(value: "expense" | "income") => setEditCategoryType(value)}>
+                                    <SelectTrigger>
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="expense">Expense</SelectItem>
+                                      <SelectItem value="income">Income</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                <div className="space-y-2">
+                                  <Label>Color</Label>
+                                  <div className="flex items-center space-x-2">
+                                    <Input
+                                      type="color"
+                                      value={editCategoryColor}
+                                      onChange={(e) => setEditCategoryColor(e.target.value)}
+                                      className="w-12 h-10 p-1 border rounded"
+                                    />
+                                    <Input
+                                      value={editCategoryColor}
+                                      onChange={(e) => setEditCategoryColor(e.target.value)}
+                                      placeholder="#000000"
+                                      className="flex-1"
+                                    />
+                                  </div>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <Button size="sm" onClick={() => handleUpdateCategory(category.id!)}>
+                                    <Save className="h-4 w-4 mr-1" />
+                                    Save
+                                  </Button>
+                                  <Button size="sm" variant="outline" onClick={() => setEditingCategory(null)}>
+                                    <X className="h-4 w-4 mr-1" />
+                                    Cancel
+                                  </Button>
+                                </div>
+                              </div>
+                            ) : (
+                              // View Mode
+                              <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center space-x-2">
+                                    <div 
+                                      className="w-4 h-4 rounded-full" 
+                                      style={{ backgroundColor: category.color }}
+                                    />
+                                    <span className="font-medium">{category.name}</span>
+                                  </div>
+                                  <div className="flex items-center space-x-1">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleEditCategory(category.id!)}
+                                      className="hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 transition-colors"
+                                    >
+                                      <Edit className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleDeleteCategory(category.id!)}
+                                      className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 dark:hover:text-red-400 transition-colors"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </div>
+                                <div className="flex items-center justify-between text-sm text-muted-foreground">
+                                  <span>{category.type}</span>
+                                  <span>{category.color}</span>
+                                </div>
+                              </div>
+                            )}
+                          </motion.div>
+                        ))}
+                      </div>
+                      {categories.filter(c => c.type === "expense").length === 0 && (
+                        <div className="text-center py-8 text-muted-foreground">
+                          <Tag className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                          <p>No expense categories yet. Add your first expense category above!</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Income Categories */}
+                    <div className="space-y-4">
+                      <div className="flex items-center space-x-2">
+                        <Tag className="h-4 w-4 text-green-500" />
+                        <span className="font-medium text-green-500">Income Categories</span>
+                        <Badge variant="secondary" className="ml-2">
+                          {categories.filter(c => c.type === "income").length}
+                        </Badge>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {categories.filter(c => c.type === "income").map((category) => (
+                          <motion.div
+                            key={category.id}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className={`border border-border rounded-lg p-4 space-y-3 ${editingCategory === category.id ? 'ring-2 ring-primary/20' : ''}`}
+                          >
+                            {editingCategory === category.id ? (
+                              // Edit Mode
+                              <div className="space-y-3">
+                                <div className="space-y-2">
+                                  <Label>Category Name</Label>
+                                  <Input
+                                    value={editCategoryName}
+                                    onChange={(e) => setEditCategoryName(e.target.value)}
+                                    placeholder="Enter category name"
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label>Type</Label>
+                                  <Select value={editCategoryType} onValueChange={(value: "expense" | "income") => setEditCategoryType(value)}>
+                                    <SelectTrigger>
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="expense">Expense</SelectItem>
+                                      <SelectItem value="income">Income</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                <div className="space-y-2">
+                                  <Label>Color</Label>
+                                  <div className="flex items-center space-x-2">
+                                    <Input
+                                      type="color"
+                                      value={editCategoryColor}
+                                      onChange={(e) => setEditCategoryColor(e.target.value)}
+                                      className="w-12 h-10 p-1 border rounded"
+                                    />
+                                    <Input
+                                      value={editCategoryColor}
+                                      onChange={(e) => setEditCategoryColor(e.target.value)}
+                                      placeholder="#000000"
+                                      className="flex-1"
+                                    />
+                                  </div>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <Button size="sm" onClick={() => handleUpdateCategory(category.id!)}>
+                                    <Save className="h-4 w-4 mr-1" />
+                                    Save
+                                  </Button>
+                                  <Button size="sm" variant="outline" onClick={() => setEditingCategory(null)}>
+                                    <X className="h-4 w-4 mr-1" />
+                                    Cancel
+                                  </Button>
+                                </div>
+                              </div>
+                            ) : (
+                              // View Mode
+                              <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center space-x-2">
+                                    <div 
+                                      className="w-4 h-4 rounded-full" 
+                                      style={{ backgroundColor: category.color }}
+                                    />
+                                    <span className="font-medium">{category.name}</span>
+                                  </div>
+                                  <div className="flex items-center space-x-1">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleEditCategory(category.id!)}
+                                      className="hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 transition-colors"
+                                    >
+                                      <Edit className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleDeleteCategory(category.id!)}
+                                      className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 dark:hover:text-red-400 transition-colors"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </div>
+                                <div className="flex items-center justify-between text-sm text-muted-foreground">
+                                  <span>{category.type}</span>
+                                  <span>{category.color}</span>
+                                </div>
+                              </div>
+                            )}
+                          </motion.div>
+                        ))}
+                      </div>
+                      {categories.filter(c => c.type === "income").length === 0 && (
+                        <div className="text-center py-8 text-muted-foreground">
+                          <Tag className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                          <p>No income categories yet. Add your first income category above!</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Budget Rules Section */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <DollarSign className="h-5 w-5" />
+                    <span>Budget Rules (50/30/20)</span>
+                  </CardTitle>
+                  <CardDescription>
+                    Customize your budget allocation percentages. The 50/30/20 rule suggests 50% for needs, 30% for wants, and 20% for savings.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <BudgetRulesSettings />
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="data" className="space-y-6">
               <DatabaseManagement />
             </TabsContent>
 

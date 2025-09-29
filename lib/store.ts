@@ -1,11 +1,12 @@
 import { create } from "zustand"
-import { type Transaction, type Category, type Budget, db } from "./database"
+import { type Transaction, type Category, type Budget, type BudgetRule, db } from "./database"
 import { useUserStore } from "./user-store"
 
 interface TransactionStore {
   transactions: Transaction[]
   categories: Category[]
   budgets: Budget[]
+  budgetRules: BudgetRule[]
   isLoading: boolean
 
   // Transaction Actions
@@ -29,12 +30,18 @@ interface TransactionStore {
   deleteBudget: (id: number) => Promise<void>
   getBudgetByCategory: (category: string) => Budget | undefined
   getBudgetProgress: (budgetId: number) => { spent: number; remaining: number; percentage: number }
+
+  // Budget Rule Actions
+  loadBudgetRules: () => Promise<void>
+  updateBudgetRule: (id: number, rule: Partial<BudgetRule>) => Promise<void>
+  getBudgetRuleProgress: (ruleId: number, monthlyIncome: number) => { spent: number; budget: number; remaining: number; percentage: number }
 }
 
 export const useTransactionStore = create<TransactionStore>((set, get) => ({
   transactions: [],
   categories: [],
   budgets: [],
+  budgetRules: [],
   isLoading: false,
 
   loadTransactions: async () => {
@@ -288,5 +295,67 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
     const percentage = budget.amount > 0 ? (spent / budget.amount) * 100 : 0
 
     return { spent, remaining, percentage }
+  },
+
+  loadBudgetRules: async () => {
+    try {
+      const { currentUser } = useUserStore.getState()
+      if (!currentUser) {
+        set({ budgetRules: [] })
+        return
+      }
+      
+      // Load user-specific budget rules and default rules (userId: null)
+      const userBudgetRules = await db.budgetRules
+        .where("userId")
+        .equals(currentUser.id)
+        .toArray()
+      
+      // Load all budget rules and filter for null userId (default rules)
+      const allBudgetRulesFromDb = await db.budgetRules.toArray()
+      const defaultBudgetRules = allBudgetRulesFromDb.filter(rule => rule.userId === null)
+      
+      const allBudgetRules = [...userBudgetRules, ...defaultBudgetRules]
+      set({ budgetRules: allBudgetRules })
+    } catch (error) {
+      console.error("Failed to load budget rules:", error)
+    }
+  },
+
+  updateBudgetRule: async (id, updates) => {
+    try {
+      const { currentUser } = useUserStore.getState()
+      if (!currentUser) return
+      
+      await db.budgetRules.update(id, {
+        ...updates,
+        userId: currentUser.id,
+        updatedAt: new Date(),
+      })
+      get().loadBudgetRules() // Reload budget rules
+    } catch (error) {
+      console.error("Failed to update budget rule:", error)
+    }
+  },
+
+  getBudgetRuleProgress: (ruleId, monthlyIncome) => {
+    const rule = get().budgetRules.find((r) => r.id === ruleId)
+    if (!rule) return { spent: 0, budget: 0, remaining: 0, percentage: 0 }
+
+    const currentMonth = new Date()
+    const startOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1)
+    const endOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0)
+
+    const spent = get()
+      .transactions.filter(
+        (t) => t.budgetRuleId === ruleId && t.amount < 0 && t.date >= startOfMonth && t.date <= endOfMonth,
+      )
+      .reduce((sum, t) => sum + Math.abs(t.amount), 0)
+
+    const budget = (monthlyIncome * rule.percentage) / 100
+    const remaining = Math.max(0, budget - spent)
+    const percentage = budget > 0 ? (spent / budget) * 100 : 0
+
+    return { spent, budget, remaining, percentage }
   },
 }))

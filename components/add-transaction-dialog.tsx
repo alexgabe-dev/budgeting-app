@@ -27,16 +27,18 @@ export function AddTransactionDialog() {
     category: "",
     type: "expense" as "income" | "expense",
     date: new Date().toISOString().split("T")[0],
+    budgetRuleId: "none",
   })
 
-  const { addTransaction, categories, loadCategories } = useTransactionStore()
+  const { addTransaction, categories, budgetRules, loadCategories, loadBudgetRules } = useTransactionStore()
 
-  // Load categories when dialog opens
+  // Load categories and budget rules when dialog opens
   useEffect(() => {
     if (open) {
       loadCategories()
+      loadBudgetRules()
     }
-  }, [open, loadCategories])
+  }, [open, loadCategories, loadBudgetRules])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -51,6 +53,7 @@ export function AddTransactionDialog() {
       category: formData.category,
       type: formData.type,
       date: new Date(formData.date),
+      budgetRuleId: formData.budgetRuleId && formData.budgetRuleId !== "none" ? Number(formData.budgetRuleId) : undefined,
     })
 
     // Reset form
@@ -60,6 +63,7 @@ export function AddTransactionDialog() {
       category: "",
       type: "expense",
       date: new Date().toISOString().split("T")[0],
+      budgetRuleId: "none",
     })
 
     setOpen(false)
@@ -138,6 +142,25 @@ export function AddTransactionDialog() {
               </SelectContent>
             </Select>
           </div>
+
+          {formData.type === "expense" && (
+            <div className="space-y-2">
+              <Label htmlFor="budgetRule">Budget Rule (50/30/20)</Label>
+              <Select value={formData.budgetRuleId} onValueChange={(value) => setFormData({ ...formData, budgetRuleId: value })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select budget rule (optional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  {budgetRules.map((rule) => (
+                    <SelectItem key={rule.id} value={rule.id?.toString() || ""}>
+                      {rule.name} ({rule.percentage}%)
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="date">Date</Label>

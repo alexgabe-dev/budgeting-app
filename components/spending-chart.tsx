@@ -57,16 +57,16 @@ export function SpendingChart() {
 
   return (
     <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
-      <Card className="bg-card border-border">
-        <CardHeader>
+      <Card className="bg-card border-border h-full">
+        <CardHeader className="pb-4">
           <CardTitle className="text-foreground">Spending Trend</CardTitle>
           <CardDescription className="text-muted-foreground">
             Your spending and income pattern over the last 6 months
             {avgSpending > 0 && <span className="block mt-1">Average monthly spending: ${avgSpending.toFixed(2)}</span>}
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
+        <CardContent className="pt-0">
+          <ResponsiveContainer width="100%" height={320}>
             <LineChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} />

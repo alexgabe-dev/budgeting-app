@@ -71,8 +71,8 @@ export function RecentTransactions() {
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-      <Card className="bg-card border-border">
-        <CardHeader>
+      <Card className="bg-card border-border h-full">
+        <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="text-foreground">Recent Transactions</CardTitle>
@@ -86,14 +86,14 @@ export function RecentTransactions() {
             </Link>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-0">
           {recentTransactions.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <p>No transactions yet.</p>
               <p className="text-sm mt-2">Add your first transaction to get started!</p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {recentTransactions.map((transaction, index) => {
                 const Icon = getCategoryIcon(transaction.category)
                 const categoryColor = getCategoryColor(transaction.category)

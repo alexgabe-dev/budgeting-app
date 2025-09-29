@@ -49,22 +49,22 @@ export function CategorySpendingChart() {
 
   return (
     <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }}>
-      <Card className="bg-card border-border">
-        <CardHeader>
+      <Card className="bg-card border-border h-full">
+        <CardHeader className="pb-4">
           <CardTitle className="text-foreground">Spending by Category</CardTitle>
           <CardDescription className="text-muted-foreground">
             This month's expenses breakdown
             {totalSpending > 0 && <span className="block mt-1">Total: ${totalSpending.toFixed(2)}</span>}
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-0">
           {chartData.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <p>No expense data for this month.</p>
               <p className="text-sm mt-2">Add some expense transactions to see the breakdown.</p>
             </div>
           ) : (
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={320}>
               <PieChart>
                 <Pie
                   data={chartData}

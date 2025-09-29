@@ -34,14 +34,14 @@ export function BudgetOverview() {
 
   return (
     <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
-      <Card className="bg-card border-border">
-        <CardHeader>
+      <Card className="bg-card border-border h-full">
+        <CardHeader className="pb-4">
           <CardTitle className="text-foreground">Budget Overview</CardTitle>
           <CardDescription className="text-muted-foreground">
             {budgetData.length > 0 ? "Current budget progress by category" : "Create budgets to track your spending"}
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="pt-0 space-y-4">
           {budgetData.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <p>No budgets created yet.</p>

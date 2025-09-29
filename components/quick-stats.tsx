@@ -4,10 +4,12 @@ import { useEffect, useMemo } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { TrendingUp, TrendingDown, DollarSign, Target } from "lucide-react"
 import { useTransactionStore } from "@/lib/store"
+import { useSettingsStore, formatCurrency } from "@/lib/settings-store"
 import { motion } from "framer-motion"
 
 export function QuickStats() {
   const { transactions, budgets, loadTransactions, loadBudgets } = useTransactionStore()
+  const { settings } = useSettingsStore()
 
   useEffect(() => {
     loadTransactions()
@@ -50,34 +52,34 @@ export function QuickStats() {
     return [
       {
         title: "Total Balance",
-        value: `$${totalBalance.toFixed(2)}`,
+        value: formatCurrency(totalBalance, settings.currency),
         change: totalBalance >= 0 ? "+0.0%" : "-0.0%",
         trend: totalBalance >= 0 ? "up" : "down",
         icon: DollarSign,
       },
       {
         title: "Monthly Spending",
-        value: `$${monthlySpending.toFixed(2)}`,
+        value: formatCurrency(monthlySpending, settings.currency),
         change: `${spendingChange >= 0 ? "+" : ""}${spendingChange.toFixed(1)}%`,
         trend: spendingChange <= 0 ? "down" : "up",
         icon: TrendingDown,
       },
       {
         title: "Budget Remaining",
-        value: totalMonthlyBudget > 0 ? `$${budgetRemaining.toFixed(2)}` : "No budgets set",
+        value: totalMonthlyBudget > 0 ? formatCurrency(budgetRemaining, settings.currency) : "No budgets set",
         change: totalMonthlyBudget > 0 ? `${budgetUsedPercentage.toFixed(0)}% used` : "Create budgets to track",
         trend: totalMonthlyBudget > 0 ? (budgetUsedPercentage > 80 ? "up" : "neutral") : "neutral",
         icon: Target,
       },
       {
         title: "Monthly Income",
-        value: `$${monthlyIncome.toFixed(2)}`,
+        value: formatCurrency(monthlyIncome, settings.currency),
         change: "This month",
         trend: "up",
         icon: TrendingUp,
       },
     ]
-  }, [transactions, budgets])
+  }, [transactions, budgets, settings.currency])
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

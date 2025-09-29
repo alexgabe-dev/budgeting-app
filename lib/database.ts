@@ -63,10 +63,10 @@ export class BudgetDatabase extends Dexie {
   constructor() {
     super("Lumo")
 
-    this.version(2).stores({
+    this.version(3).stores({
       transactions: "++id, description, amount, category, date, type, createdAt, updatedAt",
       budgets: "++id, category, amount, period, isActive, createdAt, updatedAt",
-      categories: "++id, name, type, isDefault, createdAt, updatedAt",
+      categories: "++id, name, type, isDefault, createdAt, updatedAt, [name+type]",
       appSettings: "++id, key, type, updatedAt",
       dataBackups: "++id, name, version, createdAt"
     })
@@ -77,6 +77,7 @@ export class BudgetDatabase extends Dexie {
   }
 
   private async initializeDatabase() {
+    await this.cleanupDuplicateCategories()
     await this.initializeDefaultCategories()
     await this.initializeDefaultSettings()
   }
@@ -296,7 +297,13 @@ export class BudgetDatabase extends Dexie {
         console.warn("Failed to clear backups:", error)
       }
       
-      console.log("✓ All data cleared successfully")
+      // Re-initialize default data after clearing
+      console.log("Re-initializing default data...")
+      await this.initializeDefaultCategories()
+      await this.initializeDefaultSettings()
+      console.log("✓ Default data re-initialized")
+      
+      console.log("✓ All data cleared and re-initialized successfully")
     } catch (error) {
       console.error("Failed to clear all data:", error)
       throw new Error(`Failed to clear database: ${error instanceof Error ? error.message : 'Unknown error'}`)
@@ -321,6 +328,35 @@ export class BudgetDatabase extends Dexie {
       backups,
       totalCategories: categories, // Total categories including defaults
       defaultCategories: categories - userCategories // Default categories count
+    }
+  }
+
+  async cleanupDuplicateCategories() {
+    try {
+      const allCategories = await this.categories.toArray()
+      const seen = new Set<string>()
+      const duplicates: number[] = []
+
+      for (const category of allCategories) {
+        const key = `${category.name}-${category.type}`
+        if (seen.has(key)) {
+          if (category.id) {
+            duplicates.push(category.id)
+          }
+        } else {
+          seen.add(key)
+        }
+      }
+
+      if (duplicates.length > 0) {
+        await this.categories.bulkDelete(duplicates)
+        console.log(`Cleaned up ${duplicates.length} duplicate categories`)
+      }
+
+      return duplicates.length
+    } catch (error) {
+      console.error("Failed to cleanup duplicate categories:", error)
+      return 0
     }
   }
 }

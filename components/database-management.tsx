@@ -19,7 +19,8 @@ import {
   AlertTriangle,
   CheckCircle,
   Clock,
-  FileText
+  FileText,
+  Settings
 } from "lucide-react"
 import { motion } from "framer-motion"
 import DatabaseManager from "@/lib/database-manager"
@@ -157,6 +158,25 @@ export function DatabaseManagement() {
     }
   }
 
+  const handleCleanupDuplicates = async () => {
+    setIsLoading(true)
+    try {
+      const result = await DatabaseManager.cleanupDuplicateCategories()
+      await loadStats()
+      if (result.success) {
+        showAlert("success", `Cleaned up ${result.cleanedCount} duplicate categories`)
+      } else {
+        showAlert("error", result.error || "Failed to cleanup duplicates")
+      }
+    } catch (error) {
+      console.error("Cleanup duplicates error:", error)
+      const errorMessage = error instanceof Error ? error.message : "Failed to cleanup duplicates"
+      showAlert("error", `Failed to cleanup duplicates: ${errorMessage}`)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   const handleClearAllData = async () => {
     if (!window.confirm("Are you sure you want to clear ALL data? This action cannot be undone!")) return
 
@@ -166,6 +186,8 @@ export function DatabaseManagement() {
       await loadStats()
       await loadBackups()
       showAlert("success", result.message || "All data cleared successfully")
+      // Reload the page to refresh all store states
+      window.location.reload()
     } catch (error) {
       console.error("Clear data error:", error)
       const errorMessage = error instanceof Error ? error.message : "Failed to clear data"
@@ -334,6 +356,28 @@ export function DatabaseManagement() {
               ))}
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Maintenance */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Settings className="h-5 w-5" />
+            <span>Database Maintenance</span>
+          </CardTitle>
+          <CardDescription>Clean up and optimize your database</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button
+            variant="outline"
+            onClick={handleCleanupDuplicates}
+            disabled={isLoading}
+            className="w-full"
+          >
+            <Database className="h-4 w-4 mr-2" />
+            Clean Up Duplicate Categories
+          </Button>
         </CardContent>
       </Card>
 

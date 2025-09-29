@@ -241,6 +241,16 @@ export class DatabaseManager {
     
     return errors
   }
+
+  static async cleanupDuplicateCategories() {
+    try {
+      const cleanedCount = await db.cleanupDuplicateCategories()
+      return { success: true, cleanedCount }
+    } catch (error) {
+      console.error("Failed to cleanup duplicate categories:", error)
+      return { success: false, error: error instanceof Error ? error.message : "Unknown error" }
+    }
+  }
 }
 
 export default DatabaseManager

@@ -65,8 +65,12 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
         updatedAt: now,
       }
 
-      await db.categories.add(category)
-      get().loadCategories() // Reload categories
+      const id = await db.categories.add(category)
+      // Update local state immediately with the new category
+      const newCategory = { ...category, id } as Category
+      set((state) => ({
+        categories: [...state.categories, newCategory]
+      }))
     } catch (error) {
       console.error("Failed to add category:", error)
     }
@@ -78,7 +82,14 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
         ...updates,
         updatedAt: new Date(),
       })
-      get().loadCategories() // Reload categories
+      // Update local state immediately
+      set((state) => ({
+        categories: state.categories.map(cat => 
+          cat.id === id 
+            ? { ...cat, ...updates, updatedAt: new Date() }
+            : cat
+        )
+      }))
     } catch (error) {
       console.error("Failed to update category:", error)
     }
@@ -87,7 +98,10 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
   deleteCategory: async (id) => {
     try {
       await db.categories.delete(id)
-      get().loadCategories() // Reload categories
+      // Update local state immediately
+      set((state) => ({
+        categories: state.categories.filter(cat => cat.id !== id)
+      }))
     } catch (error) {
       console.error("Failed to delete category:", error)
     }

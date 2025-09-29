@@ -41,11 +41,9 @@ export default function SettingsPage() {
     settings,
     userProfile,
     notifications,
-    categories: settingsCategories,
     updateSettings,
     updateUserProfile,
     updateNotifications,
-    updateCategories,
     resetSettings,
     exportSettings,
     importSettings
@@ -119,15 +117,8 @@ export default function SettingsPage() {
         updatedAt: new Date()
       }
       await addCategory(newCategory)
-      // Sync with settings store
-      const updatedCategories = [...categories, { 
-        ...newCategory, 
-        id: Date.now(), 
-        isDefault: false,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }]
-      updateCategories(updatedCategories)
+      // The addCategory function will automatically update the store
+      // No need to manually sync here
       setNewCategoryName("")
       setNewCategoryColor("#FF6B6B")
       setNewCategoryType("expense")
@@ -151,13 +142,8 @@ export default function SettingsPage() {
         color: editCategoryColor,
         type: editCategoryType
       })
-      // Sync with settings store
-      const updatedCategories = categories.map(cat => 
-        cat.id === editingCategory 
-          ? { ...cat, name: editCategoryName.trim(), color: editCategoryColor, type: editCategoryType }
-          : cat
-      )
-      updateCategories(updatedCategories)
+      // The updateCategory function will automatically update the store
+      // No need to manually sync here
       setEditingCategory(null)
       setEditCategoryName("")
       setEditCategoryColor("")
@@ -171,9 +157,8 @@ export default function SettingsPage() {
       "permanently",
       async () => {
         await deleteCategory(categoryId)
-        // Sync with settings store
-        const updatedCategories = categories.filter(cat => cat.id !== categoryId)
-        updateCategories(updatedCategories)
+        // The deleteCategory function will automatically update the store
+        // No need to manually sync here
       }
     )
   }
@@ -184,23 +169,10 @@ export default function SettingsPage() {
     setEditCategoryColor("")
   }
 
-  // Load categories on component mount and sync with settings store
+  // Load categories on component mount
   useEffect(() => {
     loadCategories()
   }, [loadCategories])
-
-  // Sync categories from settings store to transaction store when settings change
-  useEffect(() => {
-    if (settingsCategories.length > 0 && settingsCategories !== categories) {
-      // Update transaction store with settings categories
-      settingsCategories.forEach(async (category) => {
-        const exists = categories.find(c => c.id === category.id)
-        if (!exists) {
-          await addCategory(category)
-        }
-      })
-    }
-  }, [settingsCategories, categories, addCategory])
 
   return (
     <div className="min-h-screen bg-background">
@@ -612,7 +584,7 @@ export default function SettingsPage() {
                           key={category.id}
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
-                          className="border border-border rounded-lg p-4 space-y-3"
+                          className={`border border-border rounded-lg p-4 space-y-3 ${editingCategory === category.id ? 'ring-2 ring-primary/20' : ''}`}
                         >
                           {editingCategory === category.id ? (
                             // Edit Mode
@@ -691,18 +663,28 @@ export default function SettingsPage() {
                                   variant="outline"
                                   onClick={() => category.id && handleEditCategory(category.id)}
                                   disabled={!category.id}
+                                  className={`group flex items-center justify-center p-2 transition-all duration-300 ease-in-out min-w-[32px] ${editingCategory !== category.id ? 'hover:px-3' : ''}`}
                                 >
-                                  <Edit className="h-3 w-3 mr-1" />
-                                  Edit
+                                  <div className="flex items-center justify-center">
+                                    <Edit className={`h-4 w-4 text-foreground transition-all duration-300 ease-in-out ${editingCategory !== category.id ? 'group-hover:mr-1' : ''}`} />
+                                    <span className={`opacity-0 w-0 overflow-hidden transition-all duration-300 ease-in-out font-medium text-foreground ${editingCategory !== category.id ? 'group-hover:opacity-100 group-hover:w-auto' : ''}`}>
+                                      Edit
+                                    </span>
+                                  </div>
                                 </Button>
                                 <Button
                                   size="sm"
                                   variant="destructive"
                                   onClick={() => category.id && handleDeleteCategory(category.id)}
                                   disabled={!category.id}
+                                  className={`group flex items-center justify-center p-2 transition-all duration-300 ease-in-out min-w-[32px] ${editingCategory !== category.id ? 'hover:px-3' : ''}`}
                                 >
-                                  <Trash2 className="h-3 w-3 mr-1" />
-                                  Delete
+                                  <div className="flex items-center justify-center">
+                                    <Trash2 className={`h-4 w-4 text-destructive-foreground transition-all duration-300 ease-in-out ${editingCategory !== category.id ? 'group-hover:mr-1' : ''}`} />
+                                    <span className={`opacity-0 w-0 overflow-hidden transition-all duration-300 ease-in-out font-medium text-destructive-foreground ${editingCategory !== category.id ? 'group-hover:opacity-100 group-hover:w-auto' : ''}`}>
+                                      Delete
+                                    </span>
+                                  </div>
                                 </Button>
                               </div>
                             </div>
@@ -733,7 +715,7 @@ export default function SettingsPage() {
                           key={category.id}
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
-                          className="border border-border rounded-lg p-4 space-y-3"
+                          className={`border border-border rounded-lg p-4 space-y-3 ${editingCategory === category.id ? 'ring-2 ring-primary/20' : ''}`}
                         >
                           {editingCategory === category.id ? (
                             // Edit Mode
@@ -812,18 +794,28 @@ export default function SettingsPage() {
                                   variant="outline"
                                   onClick={() => category.id && handleEditCategory(category.id)}
                                   disabled={!category.id}
+                                  className={`group flex items-center justify-center p-2 transition-all duration-300 ease-in-out min-w-[32px] ${editingCategory !== category.id ? 'hover:px-3' : ''}`}
                                 >
-                                  <Edit className="h-3 w-3 mr-1" />
-                                  Edit
+                                  <div className="flex items-center justify-center">
+                                    <Edit className={`h-4 w-4 text-foreground transition-all duration-300 ease-in-out ${editingCategory !== category.id ? 'group-hover:mr-1' : ''}`} />
+                                    <span className={`opacity-0 w-0 overflow-hidden transition-all duration-300 ease-in-out font-medium text-foreground ${editingCategory !== category.id ? 'group-hover:opacity-100 group-hover:w-auto' : ''}`}>
+                                      Edit
+                                    </span>
+                                  </div>
                                 </Button>
                                 <Button
                                   size="sm"
                                   variant="destructive"
                                   onClick={() => category.id && handleDeleteCategory(category.id)}
                                   disabled={!category.id}
+                                  className={`group flex items-center justify-center p-2 transition-all duration-300 ease-in-out min-w-[32px] ${editingCategory !== category.id ? 'hover:px-3' : ''}`}
                                 >
-                                  <Trash2 className="h-3 w-3 mr-1" />
-                                  Delete
+                                  <div className="flex items-center justify-center">
+                                    <Trash2 className={`h-4 w-4 text-destructive-foreground transition-all duration-300 ease-in-out ${editingCategory !== category.id ? 'group-hover:mr-1' : ''}`} />
+                                    <span className={`opacity-0 w-0 overflow-hidden transition-all duration-300 ease-in-out font-medium text-destructive-foreground ${editingCategory !== category.id ? 'group-hover:opacity-100 group-hover:w-auto' : ''}`}>
+                                      Delete
+                                    </span>
+                                  </div>
                                 </Button>
                               </div>
                             </div>

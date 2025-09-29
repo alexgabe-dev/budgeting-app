@@ -7,12 +7,12 @@ import Link from "next/link"
 
 export function DashboardHeader() {
   return (
-    <header className="border-b border-border bg-card">
-      <div className="container mx-auto px-4 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <Link href="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+    <header className="border-b border-border bg-card" suppressHydrationWarning>
+      <div className="container mx-auto px-4 py-4" suppressHydrationWarning>
+        <div className="flex items-center justify-between" suppressHydrationWarning>
+          <div className="flex items-center space-x-4" suppressHydrationWarning>
+            <Link href="/" className="flex items-center space-x-2" suppressHydrationWarning>
+              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center" suppressHydrationWarning>
                 <span className="text-primary-foreground font-bold text-sm">L</span>
               </div>
               <h1 className="text-xl font-semibold text-foreground">Lumo</h1>

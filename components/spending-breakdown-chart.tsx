@@ -168,7 +168,7 @@ export function SpendingBreakdownChart() {
                 <div className="space-y-2">
                   {displayedCategories.map((item, index) => (
                     <motion.div
-                      key={item.name}
+                      key={`${item.name}-${index}`}
                       className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}

@@ -165,7 +165,7 @@ export function FinancialHealthScore() {
                 const Icon = metric.icon
                 return (
                   <motion.div
-                    key={metric.name}
+                    key={`${metric.name}-${index}`}
                     className="flex items-center justify-between p-3 rounded-lg bg-muted/30"
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}

@@ -195,10 +195,11 @@ export const CURRENCY_OPTIONS: Currency[] = [
 ]
 
 // Utility function to format currency
-export const formatCurrency = (amount: number, currency: Currency): string => {
-  const formattedAmount = currency.decimalPlaces === 0 
+export const formatCurrency = (amount: number, currency: Currency, showCents: boolean = true): string => {
+  const decimalPlaces = showCents ? currency.decimalPlaces : 0
+  const formattedAmount = decimalPlaces === 0 
     ? Math.round(amount).toString()
-    : amount.toFixed(currency.decimalPlaces)
+    : amount.toFixed(decimalPlaces)
   
   return currency.position === "before" 
     ? `${currency.symbol}${formattedAmount}`

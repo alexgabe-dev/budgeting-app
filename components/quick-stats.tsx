@@ -52,34 +52,34 @@ export function QuickStats() {
     return [
       {
         title: "Total Balance",
-        value: formatCurrency(totalBalance, settings.currency),
+        value: formatCurrency(totalBalance, settings.currency, settings.showCents),
         change: totalBalance >= 0 ? "+0.0%" : "-0.0%",
         trend: totalBalance >= 0 ? "up" : "down",
         icon: DollarSign,
       },
       {
         title: "Monthly Spending",
-        value: formatCurrency(monthlySpending, settings.currency),
+        value: formatCurrency(monthlySpending, settings.currency, settings.showCents),
         change: `${spendingChange >= 0 ? "+" : ""}${spendingChange.toFixed(1)}%`,
         trend: spendingChange <= 0 ? "down" : "up",
         icon: TrendingDown,
       },
       {
         title: "Budget Remaining",
-        value: totalMonthlyBudget > 0 ? formatCurrency(budgetRemaining, settings.currency) : "No budgets set",
+        value: totalMonthlyBudget > 0 ? formatCurrency(budgetRemaining, settings.currency, settings.showCents) : "No budgets set",
         change: totalMonthlyBudget > 0 ? `${budgetUsedPercentage.toFixed(0)}% used` : "Create budgets to track",
         trend: totalMonthlyBudget > 0 ? (budgetUsedPercentage > 80 ? "up" : "neutral") : "neutral",
         icon: Target,
       },
       {
         title: "Monthly Income",
-        value: formatCurrency(monthlyIncome, settings.currency),
+        value: formatCurrency(monthlyIncome, settings.currency, settings.showCents),
         change: "This month",
         trend: "up",
         icon: TrendingUp,
       },
     ]
-  }, [transactions, budgets, settings.currency])
+  }, [transactions, budgets, settings.currency, settings.showCents])
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">

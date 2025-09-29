@@ -4,44 +4,44 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Improved Lumo color scheme with better contrast and readability */
-  --background: #0a0a0a; /* Deep Black */
-  --foreground: #f0f0f0; /* Bright White */
-  --card: #1a1a1a; /* Dark Charcoal */
-  --card-foreground: #f0f0f0; /* Bright White */
-  --popover: #1a1a1a; /* Dark Charcoal */
-  --popover-foreground: #f0f0f0; /* Bright White */
-  --primary: #00e6e6; /* Bright Cyan */
-  --primary-foreground: #0a0a0a; /* Deep Black */
-  --secondary: #2a2a2a; /* Medium Gray */
-  --secondary-foreground: #f0f0f0; /* Bright White */
-  --muted: #2a2a2a; /* Medium Gray */
-  --muted-foreground: #a0a0a0; /* Light Gray */
-  --accent: #00b3b3; /* Darker Cyan */
+  /* Light theme - Lumo color scheme */
+  --background: #ffffff; /* Pure White */
+  --foreground: #0a0a0a; /* Deep Black */
+  --card: #f8f9fa; /* Light Gray */
+  --card-foreground: #0a0a0a; /* Deep Black */
+  --popover: #ffffff; /* Pure White */
+  --popover-foreground: #0a0a0a; /* Deep Black */
+  --primary: #00b3b3; /* Darker Cyan */
+  --primary-foreground: #ffffff; /* Pure White */
+  --secondary: #e9ecef; /* Light Gray */
+  --secondary-foreground: #0a0a0a; /* Deep Black */
+  --muted: #e9ecef; /* Light Gray */
+  --muted-foreground: #6c757d; /* Medium Gray */
+  --accent: #00e6e6; /* Bright Cyan */
   --accent-foreground: #0a0a0a; /* Deep Black */
-  --destructive: #ff3333; /* Bright Red */
-  --destructive-foreground: #f0f0f0; /* Bright White */
-  --border: #333333; /* Medium Gray */
-  --input: #2a2a2a; /* Medium Gray */
-  --ring: #00e6e6; /* Bright Cyan */
-  --chart-1: #00e6e6; /* Bright Cyan */
-  --chart-2: #00b3b3; /* Darker Cyan */
-  --chart-3: #33ccff; /* Light Blue */
-  --chart-4: #ffaa00; /* Orange */
-  --chart-5: #ff3333; /* Bright Red */
+  --destructive: #dc3545; /* Red */
+  --destructive-foreground: #ffffff; /* Pure White */
+  --border: #dee2e6; /* Light Border */
+  --input: #ffffff; /* Pure White */
+  --ring: #00b3b3; /* Darker Cyan */
+  --chart-1: #00b3b3; /* Darker Cyan */
+  --chart-2: #00e6e6; /* Bright Cyan */
+  --chart-3: #17a2b8; /* Info Blue */
+  --chart-4: #ffc107; /* Warning Yellow */
+  --chart-5: #dc3545; /* Danger Red */
   --radius: 0.625rem;
-  --sidebar: #1a1a1a; /* Dark Charcoal */
-  --sidebar-foreground: #f0f0f0; /* Bright White */
-  --sidebar-primary: #00e6e6; /* Bright Cyan */
-  --sidebar-primary-foreground: #0a0a0a; /* Deep Black */
-  --sidebar-accent: #2a2a2a; /* Medium Gray */
-  --sidebar-accent-foreground: #f0f0f0; /* Bright White */
-  --sidebar-border: #333333; /* Medium Gray */
-  --sidebar-ring: #00e6e6; /* Bright Cyan */
+  --sidebar: #f8f9fa; /* Light Gray */
+  --sidebar-foreground: #0a0a0a; /* Deep Black */
+  --sidebar-primary: #00b3b3; /* Darker Cyan */
+  --sidebar-primary-foreground: #ffffff; /* Pure White */
+  --sidebar-accent: #e9ecef; /* Light Gray */
+  --sidebar-accent-foreground: #0a0a0a; /* Deep Black */
+  --sidebar-border: #dee2e6; /* Light Border */
+  --sidebar-ring: #00b3b3; /* Darker Cyan */
 }
 
 .dark {
-  /* Dark mode uses same improved Lumo colors for consistency */
+  /* Dark theme - Lumo color scheme */
   --background: #0a0a0a; /* Deep Black */
   --foreground: #f0f0f0; /* Bright White */
   --card: #1a1a1a; /* Dark Charcoal */

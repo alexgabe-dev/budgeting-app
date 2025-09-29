@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch"
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { 
   Settings, 
   User, 
@@ -20,21 +21,21 @@ import {
   RotateCcw,
   Palette,
   Globe,
-  Target,
-  Shield
+  Shield,
+  ArrowLeft
 } from "lucide-react"
 import { useSettingsStore, CURRENCY_OPTIONS, formatCurrency } from "@/lib/settings-store"
+import { useTheme } from "next-themes"
 import { motion } from "framer-motion"
 
 export default function SettingsPage() {
+  const { theme, setTheme } = useTheme()
   const {
     settings,
     userProfile,
-    financialGoals,
     notifications,
     updateSettings,
     updateUserProfile,
-    updateFinancialGoals,
     updateNotifications,
     resetSettings,
     exportSettings,
@@ -42,6 +43,12 @@ export default function SettingsPage() {
   } = useSettingsStore()
 
   const [importData, setImportData] = useState("")
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false)
+  const [pendingChange, setPendingChange] = useState<{
+    type: string
+    value: any
+    action: () => void
+  } | null>(null)
 
   const handleImport = () => {
     if (importData.trim()) {
@@ -61,6 +68,24 @@ export default function SettingsPage() {
     URL.revokeObjectURL(url)
   }
 
+  const handleSettingChange = (type: string, value: any, action: () => void) => {
+    setPendingChange({ type, value, action })
+    setShowConfirmDialog(true)
+  }
+
+  const confirmChange = () => {
+    if (pendingChange) {
+      pendingChange.action()
+    }
+    setShowConfirmDialog(false)
+    setPendingChange(null)
+  }
+
+  const cancelChange = () => {
+    setShowConfirmDialog(false)
+    setPendingChange(null)
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-6 max-w-4xl">
@@ -70,16 +95,26 @@ export default function SettingsPage() {
           transition={{ duration: 0.5 }}
           className="space-y-6"
         >
-          <div className="flex items-center space-x-3">
-            <Settings className="h-8 w-8 text-primary" />
-            <div>
-              <h1 className="text-3xl font-bold text-foreground">Settings</h1>
-              <p className="text-muted-foreground">Customize your Lumo experience</p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <Settings className="h-8 w-8 text-primary" />
+              <div>
+                <h1 className="text-3xl font-bold text-foreground">Settings</h1>
+                <p className="text-muted-foreground">Customize your Lumo experience</p>
+              </div>
             </div>
+            <Button 
+              variant="outline" 
+              onClick={() => window.location.href = '/'}
+              className="flex items-center space-x-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span>Back to Dashboard</span>
+            </Button>
           </div>
 
           <Tabs defaultValue="general" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="general" className="flex items-center space-x-2">
                 <Settings className="h-4 w-4" />
                 <span>General</span>
@@ -91,10 +126,6 @@ export default function SettingsPage() {
               <TabsTrigger value="currency" className="flex items-center space-x-2">
                 <DollarSign className="h-4 w-4" />
                 <span>Currency</span>
-              </TabsTrigger>
-              <TabsTrigger value="goals" className="flex items-center space-x-2">
-                <Target className="h-4 w-4" />
-                <span>Goals</span>
               </TabsTrigger>
               <TabsTrigger value="notifications" className="flex items-center space-x-2">
                 <Bell className="h-4 w-4" />
@@ -116,10 +147,17 @@ export default function SettingsPage() {
                     <div className="space-y-2">
                       <Label htmlFor="theme">Theme</Label>
                       <Select
-                        value={settings.theme}
-                        onValueChange={(value: "light" | "dark" | "system") => 
-                          updateSettings({ theme: value })
-                        }
+                        value={theme || "dark"}
+                        onValueChange={(value: "light" | "dark" | "system") => {
+                          handleSettingChange(
+                            "Theme",
+                            value,
+                            () => {
+                              setTheme(value)
+                              updateSettings({ theme: value })
+                            }
+                          )
+                        }}
                       >
                         <SelectTrigger>
                           <SelectValue />
@@ -137,7 +175,11 @@ export default function SettingsPage() {
                       <Select
                         value={settings.defaultView}
                         onValueChange={(value: "dashboard" | "transactions" | "budgets" | "insights") => 
-                          updateSettings({ defaultView: value })
+                          handleSettingChange(
+                            "Default View",
+                            value,
+                            () => updateSettings({ defaultView: value })
+                          )
                         }
                       >
                         <SelectTrigger>
@@ -163,7 +205,13 @@ export default function SettingsPage() {
                     <Switch
                       id="compactMode"
                       checked={settings.compactMode}
-                      onCheckedChange={(checked) => updateSettings({ compactMode: checked })}
+                      onCheckedChange={(checked) => 
+                        handleSettingChange(
+                          "Compact Mode",
+                          checked,
+                          () => updateSettings({ compactMode: checked })
+                        )
+                      }
                     />
                   </div>
 
@@ -177,7 +225,13 @@ export default function SettingsPage() {
                     <Switch
                       id="showCents"
                       checked={settings.showCents}
-                      onCheckedChange={(checked) => updateSettings({ showCents: checked })}
+                      onCheckedChange={(checked) => 
+                        handleSettingChange(
+                          "Show Cents",
+                          checked,
+                          () => updateSettings({ showCents: checked })
+                        )
+                      }
                     />
                   </div>
                 </CardContent>
@@ -198,7 +252,11 @@ export default function SettingsPage() {
                       <Select
                         value={settings.dateFormat}
                         onValueChange={(value: "MM/DD/YYYY" | "DD/MM/YYYY" | "YYYY-MM-DD") => 
-                          updateSettings({ dateFormat: value })
+                          handleSettingChange(
+                            "Date Format",
+                            value,
+                            () => updateSettings({ dateFormat: value })
+                          )
                         }
                       >
                         <SelectTrigger>
@@ -216,7 +274,13 @@ export default function SettingsPage() {
                       <Label htmlFor="fiscalYear">Fiscal Year Start</Label>
                       <Select
                         value={settings.fiscalYearStart.toString()}
-                        onValueChange={(value) => updateSettings({ fiscalYearStart: parseInt(value) })}
+                        onValueChange={(value) => 
+                          handleSettingChange(
+                            "Fiscal Year Start",
+                            value,
+                            () => updateSettings({ fiscalYearStart: parseInt(value) })
+                          )
+                        }
                       >
                         <SelectTrigger>
                           <SelectValue />
@@ -300,7 +364,13 @@ export default function SettingsPage() {
                       value={settings.currency.code}
                       onValueChange={(value) => {
                         const currency = CURRENCY_OPTIONS.find(c => c.code === value)
-                        if (currency) updateSettings({ currency })
+                        if (currency) {
+                          handleSettingChange(
+                            "Currency",
+                            currency.name,
+                            () => updateSettings({ currency })
+                          )
+                        }
                       }}
                     >
                       <SelectTrigger>
@@ -324,73 +394,15 @@ export default function SettingsPage() {
                     <h4 className="font-medium mb-2">Preview</h4>
                     <div className="space-y-2 text-sm">
                       <p>Sample amounts:</p>
-                      <p className="font-mono">{formatCurrency(1234.56, settings.currency)}</p>
-                      <p className="font-mono">{formatCurrency(0.99, settings.currency)}</p>
-                      <p className="font-mono">{formatCurrency(1000000, settings.currency)}</p>
+                      <p className="font-mono">{formatCurrency(1234.56, settings.currency, settings.showCents)}</p>
+                      <p className="font-mono">{formatCurrency(0.99, settings.currency, settings.showCents)}</p>
+                      <p className="font-mono">{formatCurrency(1000000, settings.currency, settings.showCents)}</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
             </TabsContent>
 
-            <TabsContent value="goals" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Target className="h-5 w-5" />
-                    <span>Financial Goals</span>
-                  </CardTitle>
-                  <CardDescription>Set and track your financial objectives</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="emergencyFund">Emergency Fund</Label>
-                      <Input
-                        id="emergencyFund"
-                        type="number"
-                        value={financialGoals.emergencyFund}
-                        onChange={(e) => updateFinancialGoals({ emergencyFund: parseFloat(e.target.value) || 0 })}
-                        placeholder="0"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="savingsGoal">Savings Goal</Label>
-                      <Input
-                        id="savingsGoal"
-                        type="number"
-                        value={financialGoals.savingsGoal}
-                        onChange={(e) => updateFinancialGoals({ savingsGoal: parseFloat(e.target.value) || 0 })}
-                        placeholder="0"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="debtPayoff">Debt Payoff Goal</Label>
-                      <Input
-                        id="debtPayoff"
-                        type="number"
-                        value={financialGoals.debtPayoff}
-                        onChange={(e) => updateFinancialGoals({ debtPayoff: parseFloat(e.target.value) || 0 })}
-                        placeholder="0"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="vacationFund">Vacation Fund</Label>
-                      <Input
-                        id="vacationFund"
-                        type="number"
-                        value={financialGoals.vacationFund}
-                        onChange={(e) => updateFinancialGoals({ vacationFund: parseFloat(e.target.value) || 0 })}
-                        placeholder="0"
-                      />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
 
             <TabsContent value="notifications" className="space-y-6">
               <Card>
@@ -527,6 +539,23 @@ export default function SettingsPage() {
           </Card>
         </motion.div>
       </div>
+
+      {/* Confirmation Dialog */}
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Setting Change</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to change the {pendingChange?.type} setting to "{pendingChange?.value}"? 
+              This change will be applied immediately.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={cancelChange}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmChange}>Confirm</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

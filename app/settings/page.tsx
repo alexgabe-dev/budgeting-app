@@ -64,9 +64,11 @@ export default function SettingsPage() {
   // Category management state
   const [newCategoryName, setNewCategoryName] = useState("")
   const [newCategoryColor, setNewCategoryColor] = useState("#FF6B6B")
+  const [newCategoryType, setNewCategoryType] = useState<"expense" | "income">("expense")
   const [editingCategory, setEditingCategory] = useState<number | null>(null)
   const [editCategoryName, setEditCategoryName] = useState("")
   const [editCategoryColor, setEditCategoryColor] = useState("")
+  const [editCategoryType, setEditCategoryType] = useState<"expense" | "income">("expense")
 
   const handleImport = () => {
     if (importData.trim()) {
@@ -111,7 +113,7 @@ export default function SettingsPage() {
         name: newCategoryName.trim(),
         color: newCategoryColor,
         icon: "Tag",
-        type: "expense" as const,
+        type: newCategoryType,
         isDefault: false,
         createdAt: new Date(),
         updatedAt: new Date()
@@ -128,6 +130,7 @@ export default function SettingsPage() {
       updateCategories(updatedCategories)
       setNewCategoryName("")
       setNewCategoryColor("#FF6B6B")
+      setNewCategoryType("expense")
     }
   }
 
@@ -137,6 +140,7 @@ export default function SettingsPage() {
       setEditingCategory(categoryId)
       setEditCategoryName(category.name)
       setEditCategoryColor(category.color)
+      setEditCategoryType(category.type)
     }
   }
 
@@ -144,18 +148,20 @@ export default function SettingsPage() {
     if (editingCategory && editCategoryName.trim()) {
       await updateCategory(editingCategory, {
         name: editCategoryName.trim(),
-        color: editCategoryColor
+        color: editCategoryColor,
+        type: editCategoryType
       })
       // Sync with settings store
       const updatedCategories = categories.map(cat => 
         cat.id === editingCategory 
-          ? { ...cat, name: editCategoryName.trim(), color: editCategoryColor }
+          ? { ...cat, name: editCategoryName.trim(), color: editCategoryColor, type: editCategoryType }
           : cat
       )
       updateCategories(updatedCategories)
       setEditingCategory(null)
       setEditCategoryName("")
       setEditCategoryColor("")
+      setEditCategoryType("expense")
     }
   }
 
@@ -538,7 +544,7 @@ export default function SettingsPage() {
                       <Plus className="h-4 w-4" />
                       <span className="font-medium">Add New Category</span>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="space-y-2">
                         <Label htmlFor="newCategoryName">Category Name</Label>
                       <Input
@@ -547,6 +553,18 @@ export default function SettingsPage() {
                           onChange={(e) => setNewCategoryName(e.target.value)}
                           placeholder="Enter category name"
                       />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="newCategoryType">Type</Label>
+                        <Select value={newCategoryType} onValueChange={(value: "expense" | "income") => setNewCategoryType(value)}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="expense">Expense</SelectItem>
+                            <SelectItem value="income">Income</SelectItem>
+                          </SelectContent>
+                        </Select>
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="newCategoryColor">Color</Label>
@@ -578,13 +596,18 @@ export default function SettingsPage() {
                   <Separator />
 
                   {/* Existing Categories */}
-                  <div className="space-y-4">
-                    <div className="flex items-center space-x-2">
-                      <Tag className="h-4 w-4" />
-                      <span className="font-medium">Existing Categories</span>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {categories.map((category) => (
+                  <div className="space-y-6">
+                    {/* Expense Categories */}
+                    <div className="space-y-4">
+                      <div className="flex items-center space-x-2">
+                        <Tag className="h-4 w-4 text-red-500" />
+                        <span className="font-medium text-red-500">Expense Categories</span>
+                        <Badge variant="secondary" className="ml-2">
+                          {categories.filter(c => c.type === "expense").length}
+                        </Badge>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {categories.filter(c => c.type === "expense").map((category) => (
                         <motion.div
                           key={category.id}
                           initial={{ opacity: 0, y: 10 }}
@@ -601,6 +624,18 @@ export default function SettingsPage() {
                                   onChange={(e) => setEditCategoryName(e.target.value)}
                                   placeholder="Enter category name"
                       />
+                    </div>
+                    <div className="space-y-2">
+                                <Label>Type</Label>
+                                <Select value={editCategoryType} onValueChange={(value: "expense" | "income") => setEditCategoryType(value)}>
+                                  <SelectTrigger>
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="expense">Expense</SelectItem>
+                                    <SelectItem value="income">Income</SelectItem>
+                                  </SelectContent>
+                                </Select>
                     </div>
                     <div className="space-y-2">
                                 <Label>Color</Label>
@@ -646,6 +681,9 @@ export default function SettingsPage() {
                                   style={{ backgroundColor: category.color }}
                                 />
                                 <span className="font-medium">{category.name}</span>
+                                <Badge variant={category.type === "income" ? "default" : "secondary"} className="ml-auto">
+                                  {category.type}
+                                </Badge>
                               </div>
                               <div className="flex space-x-2">
                                 <Button
@@ -671,13 +709,135 @@ export default function SettingsPage() {
                           )}
                         </motion.div>
                       ))}
-                    </div>
-                    {categories.length === 0 && (
-                      <div className="text-center py-8 text-muted-foreground">
-                        <Tag className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                        <p>No categories yet. Add your first category above!</p>
                       </div>
-                    )}
+                      {categories.filter(c => c.type === "expense").length === 0 && (
+                        <div className="text-center py-8 text-muted-foreground">
+                          <Tag className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                          <p>No expense categories yet. Add your first expense category above!</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Income Categories */}
+                    <div className="space-y-4">
+                      <div className="flex items-center space-x-2">
+                        <Tag className="h-4 w-4 text-green-500" />
+                        <span className="font-medium text-green-500">Income Categories</span>
+                        <Badge variant="secondary" className="ml-2">
+                          {categories.filter(c => c.type === "income").length}
+                        </Badge>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {categories.filter(c => c.type === "income").map((category) => (
+                        <motion.div
+                          key={category.id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="border border-border rounded-lg p-4 space-y-3"
+                        >
+                          {editingCategory === category.id ? (
+                            // Edit Mode
+                            <div className="space-y-3">
+                    <div className="space-y-2">
+                                <Label>Category Name</Label>
+                      <Input
+                                  value={editCategoryName}
+                                  onChange={(e) => setEditCategoryName(e.target.value)}
+                                  placeholder="Enter category name"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                                <Label>Type</Label>
+                                <Select value={editCategoryType} onValueChange={(value: "expense" | "income") => setEditCategoryType(value)}>
+                                  <SelectTrigger>
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="expense">Expense</SelectItem>
+                                    <SelectItem value="income">Income</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                    </div>
+                    <div className="space-y-2">
+                                <Label>Color</Label>
+                                <div className="flex items-center space-x-2">
+                                  <input
+                                    type="color"
+                                    value={editCategoryColor}
+                                    onChange={(e) => setEditCategoryColor(e.target.value)}
+                                    className="w-8 h-8 rounded border border-input cursor-pointer"
+                                  />
+                      <Input
+                                    value={editCategoryColor}
+                                    onChange={(e) => setEditCategoryColor(e.target.value)}
+                                    placeholder="#FF6B6B"
+                                    className="flex-1"
+                                  />
+                                </div>
+                              </div>
+                              <div className="flex space-x-2">
+                                <Button
+                                  size="sm"
+                                  onClick={handleUpdateCategory}
+                                  disabled={!editCategoryName.trim()}
+                                >
+                                  <Edit className="h-3 w-3 mr-1" />
+                                  Save
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={cancelEdit}
+                                >
+                                  Cancel
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            // View Mode
+                            <div className="space-y-3">
+                              <div className="flex items-center space-x-2">
+                                <div
+                                  className="w-4 h-4 rounded-full"
+                                  style={{ backgroundColor: category.color }}
+                                />
+                                <span className="font-medium">{category.name}</span>
+                                <Badge variant={category.type === "income" ? "default" : "secondary"} className="ml-auto">
+                                  {category.type}
+                                </Badge>
+                              </div>
+                              <div className="flex space-x-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => category.id && handleEditCategory(category.id)}
+                                  disabled={!category.id}
+                                >
+                                  <Edit className="h-3 w-3 mr-1" />
+                                  Edit
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => category.id && handleDeleteCategory(category.id)}
+                                  disabled={!category.id}
+                                >
+                                  <Trash2 className="h-3 w-3 mr-1" />
+                                  Delete
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+                        </motion.div>
+                      ))}
+                      </div>
+                      {categories.filter(c => c.type === "income").length === 0 && (
+                        <div className="text-center py-8 text-muted-foreground">
+                          <Tag className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                          <p>No income categories yet. Add your first income category above!</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>

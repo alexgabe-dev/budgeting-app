@@ -304,12 +304,23 @@ export class BudgetDatabase extends Dexie {
   }
 
   async getDatabaseStats() {
+    const [transactions, budgets, categories, appSettings, backups, userCategories] = await Promise.all([
+      this.transactions.count(),
+      this.budgets.count(),
+      this.categories.count(),
+      this.appSettings.count(),
+      this.dataBackups.count(),
+      this.categories.filter(cat => !cat.isDefault).count()
+    ])
+
     return {
-      transactions: await this.transactions.count(),
-      budgets: await this.budgets.count(),
-      categories: await this.categories.count(),
-      appSettings: await this.appSettings.count(),
-      backups: await this.dataBackups.count(),
+      transactions,
+      budgets,
+      categories: userCategories, // Only show user-created categories
+      appSettings: appSettings, // Keep settings count as it's useful
+      backups,
+      totalCategories: categories, // Total categories including defaults
+      defaultCategories: categories - userCategories // Default categories count
     }
   }
 }

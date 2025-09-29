@@ -206,7 +206,10 @@ export function DatabaseManagement() {
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-foreground">{stats.categories}</div>
-                <div className="text-sm text-muted-foreground">Categories</div>
+                <div className="text-sm text-muted-foreground">Custom Categories</div>
+                {stats.defaultCategories > 0 && (
+                  <div className="text-xs text-muted-foreground">+{stats.defaultCategories} default</div>
+                )}
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-foreground">{stats.appSettings}</div>

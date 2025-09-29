@@ -251,6 +251,27 @@ export class DatabaseManager {
       return { success: false, error: error instanceof Error ? error.message : "Unknown error" }
     }
   }
+
+  // Manual User Management
+  static async addUser(email: string, password: string, name: string) {
+    try {
+      const result = await db.addUser(email, password, name)
+      return result
+    } catch (error) {
+      console.error("Failed to add user:", error)
+      return { success: false, error: error instanceof Error ? error.message : "Unknown error" }
+    }
+  }
+
+  static async getAllUsers() {
+    try {
+      const users = await db.getAllUsers()
+      return { success: true, users }
+    } catch (error) {
+      console.error("Failed to get users:", error)
+      return { success: false, error: error instanceof Error ? error.message : "Unknown error", users: [] }
+    }
+  }
 }
 
 export default DatabaseManager

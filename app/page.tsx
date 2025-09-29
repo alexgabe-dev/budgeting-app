@@ -6,7 +6,7 @@ import { QuickStats } from "@/components/quick-stats"
 import { RecentTransactions } from "@/components/recent-transactions"
 import { BudgetOverview } from "@/components/budget-overview"
 import { SpendingBreakdownChart } from "@/components/spending-breakdown-chart"
-import { CategorySpendingChart } from "@/components/category-spending-chart"
+import { AuthWrapper } from "@/components/auth-wrapper"
 import { useSettingsStore } from "@/lib/settings-store"
 
 export default function Dashboard() {
@@ -39,32 +39,29 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <DashboardHeader />
-      <main className={`container mx-auto px-4 ${isCompact ? 'py-4' : 'py-8'}`}>
-        <div className={isCompact ? 'space-y-4' : 'space-y-8'}>
-          {/* Quick Stats Section */}
-          <section>
-            <QuickStats />
-          </section>
-          
-          {/* Charts Section */}
-          <section className={`grid grid-cols-1 xl:grid-cols-2 ${isCompact ? 'gap-4' : 'gap-6'}`}>
-            <SpendingBreakdownChart />
-            <BudgetOverview />
-          </section>
-          
-          {/* Transactions and Category Section */}
-          <section className={`grid grid-cols-1 xl:grid-cols-3 ${isCompact ? 'gap-4' : 'gap-6'}`}>
-            <div className="xl:col-span-2">
+    <AuthWrapper>
+      <div className="min-h-screen bg-background">
+        <DashboardHeader />
+        <main className={`container mx-auto px-4 ${isCompact ? 'py-4' : 'py-8'}`}>
+          <div className={isCompact ? 'space-y-4' : 'space-y-8'}>
+            {/* Quick Stats Section */}
+            <section>
+              <QuickStats />
+            </section>
+            
+            {/* Charts Section */}
+            <section className={`grid grid-cols-1 xl:grid-cols-2 ${isCompact ? 'gap-4' : 'gap-6'}`}>
+              <SpendingBreakdownChart />
+              <BudgetOverview />
+            </section>
+            
+            {/* Recent Transactions Section */}
+            <section>
               <RecentTransactions />
-            </div>
-            <div className="xl:col-span-1">
-              <CategorySpendingChart />
-            </div>
-          </section>
-        </div>
-      </main>
-    </div>
+            </section>
+          </div>
+        </main>
+      </div>
+    </AuthWrapper>
   )
 }

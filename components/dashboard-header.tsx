@@ -1,11 +1,18 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Settings, Download } from "lucide-react"
+import { Settings, Download, LogOut } from "lucide-react"
 import { AddTransactionDialog } from "./add-transaction-dialog"
+import { useUserStore } from "@/lib/user-store"
 import Link from "next/link"
 
 export function DashboardHeader() {
+  const { logout, currentUser } = useUserStore()
+
+  const handleLogout = () => {
+    logout()
+  }
+
   return (
     <header className="border-b border-border bg-card" suppressHydrationWarning>
       <div className="container mx-auto px-4 py-4" suppressHydrationWarning>
@@ -52,6 +59,10 @@ export function DashboardHeader() {
               </Button>
             </Link>
             <AddTransactionDialog />
+            <Button variant="outline" size="sm" onClick={handleLogout}>
+              <LogOut className="w-4 h-4 mr-2" />
+              Logout
+            </Button>
           </div>
         </div>
       </div>

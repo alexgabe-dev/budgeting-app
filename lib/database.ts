@@ -53,22 +53,34 @@ export interface DataBackup {
   createdAt: Date
 }
 
+export interface User {
+  id?: number
+  email: string
+  password: string
+  name: string
+  isActive: boolean
+  createdAt: Date
+  updatedAt: Date
+}
+
 export class BudgetDatabase extends Dexie {
   transactions!: Table<Transaction>
   budgets!: Table<Budget>
   categories!: Table<Category>
   appSettings!: Table<AppSettings>
   dataBackups!: Table<DataBackup>
+  users!: Table<User>
 
   constructor() {
     super("Lumo")
 
-    this.version(3).stores({
+    this.version(4).stores({
       transactions: "++id, description, amount, category, date, type, createdAt, updatedAt",
       budgets: "++id, category, amount, period, isActive, createdAt, updatedAt",
       categories: "++id, name, type, isDefault, createdAt, updatedAt, [name+type]",
       appSettings: "++id, key, type, updatedAt",
-      dataBackups: "++id, name, version, createdAt"
+      dataBackups: "++id, name, version, createdAt",
+      users: "++id, email, isActive, createdAt, updatedAt"
     })
 
     this.on("ready", () => {
@@ -80,6 +92,7 @@ export class BudgetDatabase extends Dexie {
     await this.cleanupDuplicateCategories()
     await this.initializeDefaultCategories()
     await this.initializeDefaultSettings()
+    await this.initializeDefaultUsers()
   }
 
   private async initializeDefaultCategories() {
@@ -186,6 +199,72 @@ export class BudgetDatabase extends Dexie {
       ]
 
       await this.appSettings.bulkAdd(defaultSettings)
+    }
+  }
+
+  private async initializeDefaultUsers() {
+    const count = await this.users.count()
+    if (count === 0) {
+      const defaultUsers: Omit<User, "id">[] = [
+        {
+          email: "gabor.sandor@vizitor.hu",
+          password: "192212", // haha simán plain text jelszó, de pls ne csináld élesben xdd
+          name: "Gabor Sandor",
+          isActive: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        // ide manual adhatc még usert ha unatkozol lol
+        // {
+        //   email: "user2@example.com",
+        //   password: "password123", // igen mert ez olyan titkos omg
+        //   name: "User Two",
+        //   isActive: true,
+        //   createdAt: new Date(),
+        //   updatedAt: new Date(),
+        // },
+        // {
+        //   email: "user3@example.com", 
+        //   password: "password456", // hacker ne találjon meg pls :D 
+        //   name: "User Three",
+        //   isActive: true,
+        //   createdAt: new Date(),
+        //   updatedAt: new Date(),
+        // },
+      ]
+
+      await this.users.bulkAdd(defaultUsers)
+    }
+  }
+
+
+  // useradder 3000™️ (ők ugranak be a buliba)
+  async addUser(email: string, password: string, name: string) {
+    try {
+      const newUser: Omit<User, "id"> = {
+        email,
+        password, // igen, jó lenne hash-elni, de most pihen a biztonságos kód
+        name,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
+      
+      const id = await this.users.add(newUser)
+      console.log(`User megjott az ID-vel: ${id} 🎉`)
+      return { success: true, id }
+    } catch (error) {
+      console.error("User spawnolás FAIL 💀:", error)
+      return { success: false, error: error instanceof Error ? error.message : "Unknow usr" }
+    }
+  }
+
+  async getAllUsers() {
+    try {
+      return await this.users.toArray()
+    } catch (error) {
+      console.error("Failed to get users:", error)
+      return []
     }
   }
 

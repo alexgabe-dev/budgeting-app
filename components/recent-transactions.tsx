@@ -19,6 +19,7 @@ import {
   ArrowRight,
 } from "lucide-react"
 import { useTransactionStore } from "@/lib/store"
+import { useSettingsStore } from "@/lib/settings-store"
 import { motion } from "framer-motion"
 import Link from "next/link"
 
@@ -69,31 +70,34 @@ export function RecentTransactions() {
     return `${Math.floor(diffInHours / 24)} days ago`
   }
 
+  const { settings } = useSettingsStore()
+  const isCompact = settings.compactMode
+
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
       <Card className="bg-card border-border h-full">
-        <CardHeader className="pb-4">
+        <CardHeader className={isCompact ? "pb-2" : "pb-4"}>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-foreground">Recent Transactions</CardTitle>
-              <CardDescription className="text-muted-foreground">Your latest spending activity</CardDescription>
+              <CardTitle className={`${isCompact ? 'text-lg' : 'text-xl'} text-foreground`}>Recent Transactions</CardTitle>
+              <CardDescription className={`${isCompact ? 'text-xs' : 'text-sm'} text-muted-foreground`}>Your latest spending activity</CardDescription>
             </div>
             <Link href="/transactions">
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size={isCompact ? "sm" : "default"}>
                 View All
-                <ArrowRight className="w-4 h-4 ml-2" />
+                <ArrowRight className={`${isCompact ? 'w-3 h-3' : 'w-4 h-4'} ml-2`} />
               </Button>
             </Link>
           </div>
         </CardHeader>
         <CardContent className="pt-0">
           {recentTransactions.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <p>No transactions yet.</p>
-              <p className="text-sm mt-2">Add your first transaction to get started!</p>
+            <div className={`text-center ${isCompact ? 'py-4' : 'py-8'} text-muted-foreground`}>
+              <p className={isCompact ? 'text-sm' : 'text-base'}>No transactions yet.</p>
+              <p className={`${isCompact ? 'text-xs' : 'text-sm'} mt-2`}>Add your first transaction to get started!</p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className={isCompact ? 'space-y-2' : 'space-y-3'}>
               {recentTransactions.map((transaction, index) => {
                 const Icon = getCategoryIcon(transaction.category)
                 const categoryColor = getCategoryColor(transaction.category)
@@ -101,30 +105,30 @@ export function RecentTransactions() {
                 return (
                   <motion.div
                     key={transaction.id}
-                    className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted/70 transition-colors"
+                    className={`flex items-center justify-between ${isCompact ? 'p-2' : 'p-3'} rounded-lg bg-muted/50 hover:bg-muted/70 transition-colors`}
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.3, delay: index * 0.1 }}
                   >
-                    <div className="flex items-center space-x-3">
+                    <div className={`flex items-center ${isCompact ? 'space-x-2' : 'space-x-3'}`}>
                       <div
-                        className="w-10 h-10 rounded-full flex items-center justify-center"
+                        className={`${isCompact ? 'w-8 h-8' : 'w-10 h-10'} rounded-full flex items-center justify-center`}
                         style={{ backgroundColor: categoryColor + "20" }}
                       >
-                        <Icon className="w-5 h-5" style={{ color: categoryColor }} />
+                        <Icon className={`${isCompact ? 'w-4 h-4' : 'w-5 h-5'}`} style={{ color: categoryColor }} />
                       </div>
                       <div>
-                        <p className="font-medium text-foreground">{transaction.description}</p>
+                        <p className={`${isCompact ? 'text-sm' : 'text-base'} font-medium text-foreground`}>{transaction.description}</p>
                         <div className="flex items-center space-x-2">
-                          <Badge variant={transaction.type === "income" ? "default" : "secondary"} className="text-xs">
+                          <Badge variant={transaction.type === "income" ? "default" : "secondary"} className={isCompact ? 'text-[10px]' : 'text-xs'}>
                             {transaction.category}
                           </Badge>
-                          <span className="text-xs text-muted-foreground">{formatTimeAgo(transaction.date)}</span>
+                          <span className={`${isCompact ? 'text-[10px]' : 'text-xs'} text-muted-foreground`}>{formatTimeAgo(transaction.date)}</span>
                         </div>
                       </div>
                     </div>
                     <motion.span
-                      className={`font-semibold ${transaction.amount < 0 ? "text-destructive" : "text-chart-1"}`}
+                      className={`${isCompact ? 'text-sm' : 'text-base'} font-semibold ${transaction.amount < 0 ? "text-destructive" : "text-chart-1"}`}
                       initial={{ scale: 0.8 }}
                       animate={{ scale: 1 }}
                       transition={{ duration: 0.2, delay: index * 0.1 + 0.2 }}

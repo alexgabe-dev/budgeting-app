@@ -4,10 +4,13 @@ import { useEffect, useMemo } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 import { useTransactionStore } from "@/lib/store"
+import { useSettingsStore } from "@/lib/settings-store"
 import { motion } from "framer-motion"
 
 export function SpendingChart() {
   const { transactions, loadTransactions } = useTransactionStore()
+  const { settings } = useSettingsStore()
+  const isCompact = settings.compactMode
 
   useEffect(() => {
     loadTransactions()
@@ -58,15 +61,15 @@ export function SpendingChart() {
   return (
     <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
       <Card className="bg-card border-border h-full">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-foreground">Spending Trend</CardTitle>
-          <CardDescription className="text-muted-foreground">
+        <CardHeader className={isCompact ? "pb-2" : "pb-4"}>
+          <CardTitle className={`${isCompact ? 'text-lg' : 'text-xl'} text-foreground`}>Spending Trend</CardTitle>
+          <CardDescription className={`${isCompact ? 'text-xs' : 'text-sm'} text-muted-foreground`}>
             Your spending and income pattern over the last 6 months
-            {avgSpending > 0 && <span className="block mt-1">Average monthly spending: ${avgSpending.toFixed(2)}</span>}
+            {avgSpending > 0 && <span className={`block ${isCompact ? 'mt-0.5' : 'mt-1'} ${isCompact ? 'text-xs' : 'text-sm'}`}>Average monthly spending: ${avgSpending.toFixed(2)}</span>}
           </CardDescription>
         </CardHeader>
         <CardContent className="pt-0">
-          <ResponsiveContainer width="100%" height={320}>
+          <ResponsiveContainer width="100%" height={isCompact ? 240 : 320}>
             <LineChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} />

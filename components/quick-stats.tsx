@@ -82,7 +82,7 @@ export function QuickStats() {
   }, [transactions, budgets, settings.currency, settings.showCents])
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 ${settings.compactMode ? 'gap-4' : 'gap-6'}`}>
       {stats.map((stat, index) => {
         const Icon = stat.icon
         return (
@@ -93,13 +93,13 @@ export function QuickStats() {
             transition={{ duration: 0.3, delay: index * 0.1 }}
           >
             <Card className="bg-card border-border h-full">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground">{stat.title}</CardTitle>
-                <Icon className="h-4 w-4 text-muted-foreground" />
+              <CardHeader className={`flex flex-row items-center justify-between space-y-0 ${settings.compactMode ? 'pb-2' : 'pb-3'}`}>
+                <CardTitle className={`${settings.compactMode ? 'text-xs' : 'text-sm'} font-medium text-muted-foreground`}>{stat.title}</CardTitle>
+                <Icon className={`${settings.compactMode ? 'h-3 w-3' : 'h-4 w-4'} text-muted-foreground`} />
               </CardHeader>
-              <CardContent className="pb-4">
+              <CardContent className={settings.compactMode ? 'pb-2' : 'pb-4'}>
                 <motion.div
-                  className="text-2xl font-bold text-foreground mb-1"
+                  className={`${settings.compactMode ? 'text-xl' : 'text-2xl'} font-bold text-foreground ${settings.compactMode ? 'mb-0.5' : 'mb-1'}`}
                   initial={{ scale: 0.8 }}
                   animate={{ scale: 1 }}
                   transition={{ duration: 0.3, delay: index * 0.1 + 0.2 }}
@@ -107,7 +107,7 @@ export function QuickStats() {
                   {stat.value}
                 </motion.div>
                 <p
-                  className={`text-xs ${
+                  className={`${settings.compactMode ? 'text-[10px]' : 'text-xs'} ${
                     stat.trend === "up"
                       ? "text-chart-1"
                       : stat.trend === "down"

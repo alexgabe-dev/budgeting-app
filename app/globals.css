@@ -4,76 +4,76 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Updated to Lumo color scheme with matte black backgrounds and electric accents */
-  --background: #121212; /* Matte Black */
-  --foreground: #e6e6e6; /* Soft White */
-  --card: #1e1e1e; /* Charcoal Gray */
-  --card-foreground: #e6e6e6; /* Soft White */
-  --popover: #1e1e1e; /* Charcoal Gray */
-  --popover-foreground: #e6e6e6; /* Soft White */
-  --primary: #00ffff; /* Electric Cyan */
-  --primary-foreground: #121212; /* Matte Black */
-  --secondary: #2c2c2c; /* Dark Gray */
-  --secondary-foreground: #e6e6e6; /* Soft White */
-  --muted: #2c2c2c; /* Dark Gray */
-  --muted-foreground: #5a5a5a; /* Slate Gray */
-  --accent: #3a8dff; /* Cool Blue instead of Neon Green */
-  --accent-foreground: #121212; /* Matte Black */
-  --destructive: #ff4b4b; /* Vibrant Red */
-  --destructive-foreground: #e6e6e6; /* Soft White */
-  --border: #2c2c2c; /* Dark Gray */
-  --input: #2c2c2c; /* Dark Gray */
-  --ring: #00ffff; /* Electric Cyan */
-  --chart-1: #00ffff; /* Electric Cyan */
-  --chart-2: #39ff14; /* Neon Green */
-  --chart-3: #3a8dff; /* Cool Blue */
-  --chart-4: #ffb300; /* Amber */
-  --chart-5: #ff4b4b; /* Vibrant Red */
+  /* Improved Lumo color scheme with better contrast and readability */
+  --background: #0a0a0a; /* Deep Black */
+  --foreground: #f0f0f0; /* Bright White */
+  --card: #1a1a1a; /* Dark Charcoal */
+  --card-foreground: #f0f0f0; /* Bright White */
+  --popover: #1a1a1a; /* Dark Charcoal */
+  --popover-foreground: #f0f0f0; /* Bright White */
+  --primary: #00e6e6; /* Bright Cyan */
+  --primary-foreground: #0a0a0a; /* Deep Black */
+  --secondary: #2a2a2a; /* Medium Gray */
+  --secondary-foreground: #f0f0f0; /* Bright White */
+  --muted: #2a2a2a; /* Medium Gray */
+  --muted-foreground: #a0a0a0; /* Light Gray */
+  --accent: #00b3b3; /* Darker Cyan */
+  --accent-foreground: #0a0a0a; /* Deep Black */
+  --destructive: #ff3333; /* Bright Red */
+  --destructive-foreground: #f0f0f0; /* Bright White */
+  --border: #333333; /* Medium Gray */
+  --input: #2a2a2a; /* Medium Gray */
+  --ring: #00e6e6; /* Bright Cyan */
+  --chart-1: #00e6e6; /* Bright Cyan */
+  --chart-2: #00b3b3; /* Darker Cyan */
+  --chart-3: #33ccff; /* Light Blue */
+  --chart-4: #ffaa00; /* Orange */
+  --chart-5: #ff3333; /* Bright Red */
   --radius: 0.625rem;
-  --sidebar: #1e1e1e; /* Charcoal Gray */
-  --sidebar-foreground: #e6e6e6; /* Soft White */
-  --sidebar-primary: #00ffff; /* Electric Cyan */
-  --sidebar-primary-foreground: #121212; /* Matte Black */
-  --sidebar-accent: #2c2c2c; /* Dark Gray */
-  --sidebar-accent-foreground: #e6e6e6; /* Soft White */
-  --sidebar-border: #2c2c2c; /* Dark Gray */
-  --sidebar-ring: #00ffff; /* Electric Cyan */
+  --sidebar: #1a1a1a; /* Dark Charcoal */
+  --sidebar-foreground: #f0f0f0; /* Bright White */
+  --sidebar-primary: #00e6e6; /* Bright Cyan */
+  --sidebar-primary-foreground: #0a0a0a; /* Deep Black */
+  --sidebar-accent: #2a2a2a; /* Medium Gray */
+  --sidebar-accent-foreground: #f0f0f0; /* Bright White */
+  --sidebar-border: #333333; /* Medium Gray */
+  --sidebar-ring: #00e6e6; /* Bright Cyan */
 }
 
 .dark {
-  /* Dark mode uses same Lumo colors since it's already a dark theme */
-  --background: #121212; /* Matte Black */
-  --foreground: #e6e6e6; /* Soft White */
-  --card: #1e1e1e; /* Charcoal Gray */
-  --card-foreground: #e6e6e6; /* Soft White */
-  --popover: #1e1e1e; /* Charcoal Gray */
-  --popover-foreground: #e6e6e6; /* Soft White */
-  --primary: #00ffff; /* Electric Cyan */
-  --primary-foreground: #121212; /* Matte Black */
-  --secondary: #2c2c2c; /* Dark Gray */
-  --secondary-foreground: #e6e6e6; /* Soft White */
-  --muted: #2c2c2c; /* Dark Gray */
-  --muted-foreground: #5a5a5a; /* Slate Gray */
-  --accent: #3a8dff; /* Cool Blue instead of Neon Green */
-  --accent-foreground: #121212; /* Matte Black */
-  --destructive: #ff4b4b; /* Vibrant Red */
-  --destructive-foreground: #e6e6e6; /* Soft White */
-  --border: #2c2c2c; /* Dark Gray */
-  --input: #2c2c2c; /* Dark Gray */
-  --ring: #00ffff; /* Electric Cyan */
-  --chart-1: #00ffff; /* Electric Cyan */
-  --chart-2: #39ff14; /* Neon Green */
-  --chart-3: #3a8dff; /* Cool Blue */
-  --chart-4: #ffb300; /* Amber */
-  --chart-5: #ff4b4b; /* Vibrant Red */
-  --sidebar: #1e1e1e; /* Charcoal Gray */
-  --sidebar-foreground: #e6e6e6; /* Soft White */
-  --sidebar-primary: #00ffff; /* Electric Cyan */
-  --sidebar-primary-foreground: #121212; /* Matte Black */
-  --sidebar-accent: #2c2c2c; /* Dark Gray */
-  --sidebar-accent-foreground: #e6e6e6; /* Soft White */
-  --sidebar-border: #2c2c2c; /* Dark Gray */
-  --sidebar-ring: #00ffff; /* Electric Cyan */
+  /* Dark mode uses same improved Lumo colors for consistency */
+  --background: #0a0a0a; /* Deep Black */
+  --foreground: #f0f0f0; /* Bright White */
+  --card: #1a1a1a; /* Dark Charcoal */
+  --card-foreground: #f0f0f0; /* Bright White */
+  --popover: #1a1a1a; /* Dark Charcoal */
+  --popover-foreground: #f0f0f0; /* Bright White */
+  --primary: #00e6e6; /* Bright Cyan */
+  --primary-foreground: #0a0a0a; /* Deep Black */
+  --secondary: #2a2a2a; /* Medium Gray */
+  --secondary-foreground: #f0f0f0; /* Bright White */
+  --muted: #2a2a2a; /* Medium Gray */
+  --muted-foreground: #a0a0a0; /* Light Gray */
+  --accent: #00b3b3; /* Darker Cyan */
+  --accent-foreground: #0a0a0a; /* Deep Black */
+  --destructive: #ff3333; /* Bright Red */
+  --destructive-foreground: #f0f0f0; /* Bright White */
+  --border: #333333; /* Medium Gray */
+  --input: #2a2a2a; /* Medium Gray */
+  --ring: #00e6e6; /* Bright Cyan */
+  --chart-1: #00e6e6; /* Bright Cyan */
+  --chart-2: #00b3b3; /* Darker Cyan */
+  --chart-3: #33ccff; /* Light Blue */
+  --chart-4: #ffaa00; /* Orange */
+  --chart-5: #ff3333; /* Bright Red */
+  --sidebar: #1a1a1a; /* Dark Charcoal */
+  --sidebar-foreground: #f0f0f0; /* Bright White */
+  --sidebar-primary: #00e6e6; /* Bright Cyan */
+  --sidebar-primary-foreground: #0a0a0a; /* Deep Black */
+  --sidebar-accent: #2a2a2a; /* Medium Gray */
+  --sidebar-accent-foreground: #f0f0f0; /* Bright White */
+  --sidebar-border: #333333; /* Medium Gray */
+  --sidebar-ring: #00e6e6; /* Bright Cyan */
 }
 
 @theme inline {

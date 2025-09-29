@@ -23,6 +23,7 @@ import {
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useTransactionStore } from "@/lib/store"
+import { useSettingsStore, formatCurrency } from "@/lib/settings-store"
 
 const iconMap = {
   UtensilsCrossed,
@@ -39,6 +40,7 @@ const iconMap = {
 export function TransactionList() {
   const { transactions, categories, isLoading, loadTransactions, loadCategories, deleteTransaction } =
     useTransactionStore()
+  const { settings } = useSettingsStore()
   const [searchTerm, setSearchTerm] = useState("")
   const [categoryFilter, setCategoryFilter] = useState("all")
   const [typeFilter, setTypeFilter] = useState("all")
@@ -176,7 +178,7 @@ export function TransactionList() {
                         transaction.amount < 0 ? "text-destructive" : "text-chart-1"
                       }`}
                     >
-                      {transaction.amount < 0 ? "-" : "+"}${Math.abs(transaction.amount).toFixed(2)}
+                      {transaction.amount < 0 ? "-" : "+"}{formatCurrency(Math.abs(transaction.amount), settings.currency, settings.showCents)}
                     </span>
 
                     <DropdownMenu>

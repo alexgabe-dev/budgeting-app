@@ -4,7 +4,7 @@ import { useEffect, useMemo } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 import { useTransactionStore } from "@/lib/store"
-import { useSettingsStore } from "@/lib/settings-store"
+import { useSettingsStore, formatCurrency } from "@/lib/settings-store"
 import { motion } from "framer-motion"
 
 export function SpendingChart() {
@@ -65,7 +65,7 @@ export function SpendingChart() {
           <CardTitle className={`${isCompact ? 'text-lg' : 'text-xl'} text-foreground`}>Spending Trend</CardTitle>
           <CardDescription className={`${isCompact ? 'text-xs' : 'text-sm'} text-muted-foreground`}>
             Your spending and income pattern over the last 6 months
-            {avgSpending > 0 && <span className={`block ${isCompact ? 'mt-0.5' : 'mt-1'} ${isCompact ? 'text-xs' : 'text-sm'}`}>Average monthly spending: ${avgSpending.toFixed(2)}</span>}
+            {avgSpending > 0 && <span className={`block ${isCompact ? 'mt-0.5' : 'mt-1'} ${isCompact ? 'text-xs' : 'text-sm'}`}>Average monthly spending: {formatCurrency(avgSpending, settings.currency, settings.showCents)}</span>}
           </CardDescription>
         </CardHeader>
         <CardContent className="pt-0">
@@ -82,7 +82,7 @@ export function SpendingChart() {
                   color: "hsl(var(--popover-foreground))",
                 }}
                 formatter={(value: number, name: string) => [
-                  `$${value.toFixed(2)}`,
+                  formatCurrency(value, settings.currency, settings.showCents),
                   name === "spending" ? "Spending" : name === "income" ? "Income" : "Net",
                 ]}
               />

@@ -4,10 +4,12 @@ import { useEffect, useMemo } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { useTransactionStore } from "@/lib/store"
+import { useSettingsStore, formatCurrency } from "@/lib/settings-store"
 import { motion } from "framer-motion"
 
 export function BudgetOverview() {
   const { transactions, budgets, loadTransactions, loadBudgets, getBudgetProgress } = useTransactionStore()
+  const { settings } = useSettingsStore()
 
   useEffect(() => {
     loadTransactions()
@@ -65,7 +67,7 @@ export function BudgetOverview() {
                       <span className="text-xs text-muted-foreground">({item.period})</span>
                     </div>
                     <span className={`text-sm ${isOverBudget ? "text-destructive" : "text-muted-foreground"}`}>
-                      ${item.spent.toFixed(2)} / ${item.budget.toFixed(2)}
+                      {formatCurrency(item.spent, settings.currency, settings.showCents)} / {formatCurrency(item.budget, settings.currency, settings.showCents)}
                     </span>
                   </div>
                   <div className="relative">
@@ -80,7 +82,7 @@ export function BudgetOverview() {
                     )}
                   </div>
                   {isOverBudget && (
-                    <p className="text-xs text-destructive">Over budget by ${(item.spent - item.budget).toFixed(2)}</p>
+                    <p className="text-xs text-destructive">Over budget by {formatCurrency(item.spent - item.budget, settings.currency, settings.showCents)}</p>
                   )}
                 </motion.div>
               )

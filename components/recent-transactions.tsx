@@ -19,7 +19,7 @@ import {
   ArrowRight,
 } from "lucide-react"
 import { useTransactionStore } from "@/lib/store"
-import { useSettingsStore } from "@/lib/settings-store"
+import { useSettingsStore, formatCurrency } from "@/lib/settings-store"
 import { motion } from "framer-motion"
 import Link from "next/link"
 
@@ -133,7 +133,7 @@ export function RecentTransactions() {
                       animate={{ scale: 1 }}
                       transition={{ duration: 0.2, delay: index * 0.1 + 0.2 }}
                     >
-                      {transaction.amount < 0 ? "-" : "+"}${Math.abs(transaction.amount).toFixed(2)}
+                      {transaction.amount < 0 ? "-" : "+"}{formatCurrency(Math.abs(transaction.amount), settings.currency, settings.showCents)}
                     </motion.span>
                   </motion.div>
                 )

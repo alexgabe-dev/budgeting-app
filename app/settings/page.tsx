@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
@@ -22,9 +22,14 @@ import {
   Palette,
   Globe,
   Shield,
-  ArrowLeft
+  ArrowLeft,
+  Tag,
+  Plus,
+  Trash2,
+  Edit
 } from "lucide-react"
 import { useSettingsStore, CURRENCY_OPTIONS, formatCurrency } from "@/lib/settings-store"
+import { useTransactionStore } from "@/lib/store"
 import { useTheme } from "next-themes"
 import { motion } from "framer-motion"
 
@@ -34,13 +39,17 @@ export default function SettingsPage() {
     settings,
     userProfile,
     notifications,
+    categories: settingsCategories,
     updateSettings,
     updateUserProfile,
     updateNotifications,
+    updateCategories,
     resetSettings,
     exportSettings,
     importSettings
   } = useSettingsStore()
+  
+  const { categories, loadCategories, addCategory, updateCategory, deleteCategory } = useTransactionStore()
 
   const [importData, setImportData] = useState("")
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)
@@ -49,6 +58,13 @@ export default function SettingsPage() {
     value: any
     action: () => void
   } | null>(null)
+  
+  // Category management state
+  const [newCategoryName, setNewCategoryName] = useState("")
+  const [newCategoryColor, setNewCategoryColor] = useState("#FF6B6B")
+  const [editingCategory, setEditingCategory] = useState<number | null>(null)
+  const [editCategoryName, setEditCategoryName] = useState("")
+  const [editCategoryColor, setEditCategoryColor] = useState("")
 
   const handleImport = () => {
     if (importData.trim()) {
@@ -86,6 +102,89 @@ export default function SettingsPage() {
     setPendingChange(null)
   }
 
+  // Category management functions
+  const handleAddCategory = async () => {
+    if (newCategoryName.trim()) {
+      const newCategory = {
+        name: newCategoryName.trim(),
+        color: newCategoryColor,
+        icon: "Tag",
+        type: "expense" as const
+      }
+      await addCategory(newCategory)
+      // Sync with settings store
+      const updatedCategories = [...categories, { ...newCategory, id: Date.now(), createdAt: new Date() }]
+      updateCategories(updatedCategories)
+      setNewCategoryName("")
+      setNewCategoryColor("#FF6B6B")
+    }
+  }
+
+  const handleEditCategory = (categoryId: number) => {
+    const category = categories.find(c => c.id === categoryId)
+    if (category) {
+      setEditingCategory(categoryId)
+      setEditCategoryName(category.name)
+      setEditCategoryColor(category.color)
+    }
+  }
+
+  const handleUpdateCategory = async () => {
+    if (editingCategory && editCategoryName.trim()) {
+      await updateCategory(editingCategory, {
+        name: editCategoryName.trim(),
+        color: editCategoryColor
+      })
+      // Sync with settings store
+      const updatedCategories = categories.map(cat => 
+        cat.id === editingCategory 
+          ? { ...cat, name: editCategoryName.trim(), color: editCategoryColor }
+          : cat
+      )
+      updateCategories(updatedCategories)
+      setEditingCategory(null)
+      setEditCategoryName("")
+      setEditCategoryColor("")
+    }
+  }
+
+  const handleDeleteCategory = (categoryId: number) => {
+    handleSettingChange(
+      "Delete Category",
+      "permanently",
+      async () => {
+        await deleteCategory(categoryId)
+        // Sync with settings store
+        const updatedCategories = categories.filter(cat => cat.id !== categoryId)
+        updateCategories(updatedCategories)
+      }
+    )
+  }
+
+  const cancelEdit = () => {
+    setEditingCategory(null)
+    setEditCategoryName("")
+    setEditCategoryColor("")
+  }
+
+  // Load categories on component mount and sync with settings store
+  useEffect(() => {
+    loadCategories()
+  }, [loadCategories])
+
+  // Sync categories from settings store to transaction store when settings change
+  useEffect(() => {
+    if (settingsCategories.length > 0 && settingsCategories !== categories) {
+      // Update transaction store with settings categories
+      settingsCategories.forEach(async (category) => {
+        const exists = categories.find(c => c.id === category.id)
+        if (!exists) {
+          await addCategory(category)
+        }
+      })
+    }
+  }, [settingsCategories, categories, addCategory])
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-6 max-w-4xl">
@@ -96,12 +195,12 @@ export default function SettingsPage() {
           className="space-y-6"
         >
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <Settings className="h-8 w-8 text-primary" />
-              <div>
-                <h1 className="text-3xl font-bold text-foreground">Settings</h1>
-                <p className="text-muted-foreground">Customize your Lumo experience</p>
-              </div>
+          <div className="flex items-center space-x-3">
+            <Settings className="h-8 w-8 text-primary" />
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">Settings</h1>
+              <p className="text-muted-foreground">Customize your Lumo experience</p>
+            </div>
             </div>
             <Button 
               variant="outline" 
@@ -114,7 +213,7 @@ export default function SettingsPage() {
           </div>
 
           <Tabs defaultValue="general" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="general" className="flex items-center space-x-2">
                 <Settings className="h-4 w-4" />
                 <span>General</span>
@@ -126,6 +225,10 @@ export default function SettingsPage() {
               <TabsTrigger value="currency" className="flex items-center space-x-2">
                 <DollarSign className="h-4 w-4" />
                 <span>Currency</span>
+              </TabsTrigger>
+              <TabsTrigger value="categories" className="flex items-center space-x-2">
+                <Tag className="h-4 w-4" />
+                <span>Categories</span>
               </TabsTrigger>
               <TabsTrigger value="notifications" className="flex items-center space-x-2">
                 <Bell className="h-4 w-4" />
@@ -154,8 +257,8 @@ export default function SettingsPage() {
                             value,
                             () => {
                               setTheme(value)
-                              updateSettings({ theme: value })
-                            }
+                          updateSettings({ theme: value })
+                        }
                           )
                         }}
                       >
@@ -404,6 +507,166 @@ export default function SettingsPage() {
               </Card>
             </TabsContent>
 
+            <TabsContent value="categories" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <Tag className="h-5 w-5" />
+                    <span>Category Management</span>
+                  </CardTitle>
+                  <CardDescription>Manage your transaction categories and their colors</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Add New Category */}
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-2">
+                      <Plus className="h-4 w-4" />
+                      <span className="font-medium">Add New Category</span>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="newCategoryName">Category Name</Label>
+                      <Input
+                          id="newCategoryName"
+                          value={newCategoryName}
+                          onChange={(e) => setNewCategoryName(e.target.value)}
+                          placeholder="Enter category name"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="newCategoryColor">Color</Label>
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="color"
+                            id="newCategoryColor"
+                            value={newCategoryColor}
+                            onChange={(e) => setNewCategoryColor(e.target.value)}
+                            className="w-10 h-10 rounded border border-input cursor-pointer"
+                          />
+                      <Input
+                            value={newCategoryColor}
+                            onChange={(e) => setNewCategoryColor(e.target.value)}
+                            placeholder="#FF6B6B"
+                            className="flex-1"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex items-end">
+                        <Button onClick={handleAddCategory} disabled={!newCategoryName.trim()}>
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Category
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* Existing Categories */}
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-2">
+                      <Tag className="h-4 w-4" />
+                      <span className="font-medium">Existing Categories</span>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {categories.map((category) => (
+                        <motion.div
+                          key={category.id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="border border-border rounded-lg p-4 space-y-3"
+                        >
+                          {editingCategory === category.id ? (
+                            // Edit Mode
+                            <div className="space-y-3">
+                    <div className="space-y-2">
+                                <Label>Category Name</Label>
+                      <Input
+                                  value={editCategoryName}
+                                  onChange={(e) => setEditCategoryName(e.target.value)}
+                                  placeholder="Enter category name"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                                <Label>Color</Label>
+                                <div className="flex items-center space-x-2">
+                                  <input
+                                    type="color"
+                                    value={editCategoryColor}
+                                    onChange={(e) => setEditCategoryColor(e.target.value)}
+                                    className="w-8 h-8 rounded border border-input cursor-pointer"
+                                  />
+                      <Input
+                                    value={editCategoryColor}
+                                    onChange={(e) => setEditCategoryColor(e.target.value)}
+                                    placeholder="#FF6B6B"
+                                    className="flex-1"
+                                  />
+                                </div>
+                              </div>
+                              <div className="flex space-x-2">
+                                <Button
+                                  size="sm"
+                                  onClick={handleUpdateCategory}
+                                  disabled={!editCategoryName.trim()}
+                                >
+                                  <Edit className="h-3 w-3 mr-1" />
+                                  Save
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={cancelEdit}
+                                >
+                                  Cancel
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            // View Mode
+                            <div className="space-y-3">
+                              <div className="flex items-center space-x-2">
+                                <div
+                                  className="w-4 h-4 rounded-full"
+                                  style={{ backgroundColor: category.color }}
+                                />
+                                <span className="font-medium">{category.name}</span>
+                              </div>
+                              <div className="flex space-x-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => category.id && handleEditCategory(category.id)}
+                                  disabled={!category.id}
+                                >
+                                  <Edit className="h-3 w-3 mr-1" />
+                                  Edit
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => category.id && handleDeleteCategory(category.id)}
+                                  disabled={!category.id}
+                                >
+                                  <Trash2 className="h-3 w-3 mr-1" />
+                                  Delete
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+                        </motion.div>
+                      ))}
+                    </div>
+                    {categories.length === 0 && (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <Tag className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                        <p>No categories yet. Add your first category above!</p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
             <TabsContent value="notifications" className="space-y-6">
               <Card>

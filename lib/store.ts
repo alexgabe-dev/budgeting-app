@@ -16,6 +16,11 @@ interface TransactionStore {
   getTransactionsByDateRange: (startDate: Date, endDate: Date) => Transaction[]
   getTransactionsByCategory: (category: string) => Transaction[]
 
+  // Category Actions
+  addCategory: (category: Omit<Category, "id" | "createdAt" | "updatedAt">) => Promise<void>
+  updateCategory: (id: number, category: Partial<Category>) => Promise<void>
+  deleteCategory: (id: number) => Promise<void>
+
   // Budget Actions
   loadBudgets: () => Promise<void>
   addBudget: (budget: Omit<Budget, "id" | "createdAt" | "updatedAt">) => Promise<void>
@@ -48,6 +53,43 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
       set({ categories })
     } catch (error) {
       console.error("Failed to load categories:", error)
+    }
+  },
+
+  addCategory: async (categoryData) => {
+    try {
+      const now = new Date()
+      const category: Omit<Category, "id"> = {
+        ...categoryData,
+        createdAt: now,
+        updatedAt: now,
+      }
+
+      await db.categories.add(category)
+      get().loadCategories() // Reload categories
+    } catch (error) {
+      console.error("Failed to add category:", error)
+    }
+  },
+
+  updateCategory: async (id, updates) => {
+    try {
+      await db.categories.update(id, {
+        ...updates,
+        updatedAt: new Date(),
+      })
+      get().loadCategories() // Reload categories
+    } catch (error) {
+      console.error("Failed to update category:", error)
+    }
+  },
+
+  deleteCategory: async (id) => {
+    try {
+      await db.categories.delete(id)
+      get().loadCategories() // Reload categories
+    } catch (error) {
+      console.error("Failed to delete category:", error)
     }
   },
 

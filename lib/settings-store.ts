@@ -1,5 +1,6 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
+import { type Category } from "./database"
 
 export interface Currency {
   code: string
@@ -47,12 +48,14 @@ export interface SettingsStore {
   userProfile: UserProfile
   financialGoals: FinancialGoals
   notifications: NotificationSettings
+  categories: Category[]
   
   // Actions
   updateSettings: (settings: Partial<AppSettings>) => void
   updateUserProfile: (profile: Partial<UserProfile>) => void
   updateFinancialGoals: (goals: Partial<FinancialGoals>) => void
   updateNotifications: (notifications: Partial<NotificationSettings>) => void
+  updateCategories: (categories: Category[]) => void
   resetSettings: () => void
   exportSettings: () => string
   importSettings: (data: string) => void
@@ -98,6 +101,19 @@ const defaultNotifications: NotificationSettings = {
   emailNotifications: false
 }
 
+const defaultCategories: Category[] = [
+  { id: 1, name: "Food", color: "#FF6B6B", icon: "Utensils", type: "expense", createdAt: new Date() },
+  { id: 2, name: "Transportation", color: "#45B7D1", icon: "Car", type: "expense", createdAt: new Date() },
+  { id: 3, name: "Entertainment", color: "#4ECDC4", icon: "Film", type: "expense", createdAt: new Date() },
+  { id: 4, name: "Shopping", color: "#96CEB4", icon: "ShoppingBag", type: "expense", createdAt: new Date() },
+  { id: 5, name: "Bills & Utilities", color: "#85C1E9", icon: "FileText", type: "expense", createdAt: new Date() },
+  { id: 6, name: "Healthcare", color: "#FFEAA7", icon: "Heart", type: "expense", createdAt: new Date() },
+  { id: 7, name: "Education", color: "#DDA0DD", icon: "Book", type: "expense", createdAt: new Date() },
+  { id: 8, name: "Travel", color: "#F7DC6F", icon: "Plane", type: "expense", createdAt: new Date() },
+  { id: 9, name: "Salary", color: "#82E0AA", icon: "DollarSign", type: "income", createdAt: new Date() },
+  { id: 10, name: "Other", color: "#F8C471", icon: "Tag", type: "expense", createdAt: new Date() }
+]
+
 export const useSettingsStore = create<SettingsStore>()(
   persist(
     (set, get) => ({
@@ -105,6 +121,7 @@ export const useSettingsStore = create<SettingsStore>()(
       userProfile: defaultUserProfile,
       financialGoals: defaultFinancialGoals,
       notifications: defaultNotifications,
+      categories: defaultCategories,
 
       updateSettings: (newSettings) => {
         set((state) => ({
@@ -130,12 +147,17 @@ export const useSettingsStore = create<SettingsStore>()(
         }))
       },
 
+      updateCategories: (newCategories) => {
+        set({ categories: newCategories })
+      },
+
       resetSettings: () => {
         set({
           settings: defaultSettings,
           userProfile: defaultUserProfile,
           financialGoals: defaultFinancialGoals,
-          notifications: defaultNotifications
+          notifications: defaultNotifications,
+          categories: defaultCategories
         })
       },
 
@@ -145,7 +167,8 @@ export const useSettingsStore = create<SettingsStore>()(
           settings: state.settings,
           userProfile: state.userProfile,
           financialGoals: state.financialGoals,
-          notifications: state.notifications
+          notifications: state.notifications,
+          categories: state.categories
         }, null, 2)
       },
 
@@ -156,7 +179,8 @@ export const useSettingsStore = create<SettingsStore>()(
             settings: { ...defaultSettings, ...imported.settings },
             userProfile: { ...defaultUserProfile, ...imported.userProfile },
             financialGoals: { ...defaultFinancialGoals, ...imported.financialGoals },
-            notifications: { ...defaultNotifications, ...imported.notifications }
+            notifications: { ...defaultNotifications, ...imported.notifications },
+            categories: imported.categories || defaultCategories
           })
         } catch (error) {
           console.error("Failed to import settings:", error)

@@ -12,74 +12,10 @@ export function CategorySpendingChart() {
   const { settings } = useSettingsStore()
   const isCompact = settings.compactMode
 
-  // Define vibrant colors for all categories
-  const categoryColors = {
-    // Food & Dining
-    'Food': '#FF6B6B', // Red
-    'Food & Dining': '#FF6B6B', // Red
-    'Groceries': '#FF8A80', // Light Red
-    'Restaurants': '#FFAB91', // Orange Red
-    
-    // Transportation
-    'Transport': '#45B7D1', // Blue
-    'Transportation': '#45B7D1', // Blue
-    'Gas': '#64B5F6', // Light Blue
-    'Public Transport': '#90CAF9', // Lighter Blue
-    'Car': '#BBDEFB', // Very Light Blue
-    
-    // Entertainment
-    'Entertainment': '#4ECDC4', // Teal
-    'Movies': '#26A69A', // Dark Teal
-    'Games': '#4DB6AC', // Medium Teal
-    'Sports': '#80CBC4', // Light Teal
-    'Music': '#B2DFDB', // Very Light Teal
-    
-    // Shopping
-    'Shopping': '#96CEB4', // Green
-    'Clothes': '#81C784', // Medium Green
-    'Electronics': '#A5D6A7', // Light Green
-    'Shopping Books': '#C8E6C9', // Very Light Green
-    'Online Shopping': '#E8F5E8', // Ultra Light Green
-    
-    // Bills & Utilities
-    'Bills': '#85C1E9', // Light Blue
-    'Bills & Utilities': '#85C1E9', // Light Blue
-    'Utilities': '#98D8C8', // Mint
-    'Electricity': '#AED6F1', // Light Blue
-    'Water': '#D6EAF8', // Very Light Blue
-    'Internet': '#EBF5FB', // Ultra Light Blue
-    'Phone': '#F4F6F7', // Almost White Blue
-    
-    // Healthcare
-    'Healthcare': '#FFEAA7', // Yellow
-    'Medical': '#F7DC6F', // Gold
-    'Pharmacy': '#FCF3CF', // Light Yellow
-    'Dental': '#FEF9E7', // Very Light Yellow
-    'Insurance': '#FDFEFE', // Almost White Yellow
-    
-    // Education
-    'Education': '#DDA0DD', // Plum
-    'School': '#BB8FCE', // Lavender
-    'Courses': '#D7BDE2', // Light Purple
-    'Education Books': '#E8DAEF', // Very Light Purple
-    
-    // Travel
-    'Travel': '#F7DC6F', // Gold
-    'Vacation': '#F8C471', // Orange
-    'Hotels': '#FADBD8', // Light Orange
-    'Flights': '#FDEBD0', // Very Light Orange
-    
-    // Income
-    'Salary': '#82E0AA', // Light Green
-    'Income': '#82E0AA', // Light Green
-    'Bonus': '#A9DFBF', // Light Green
-    'Investment': '#D5F4E6', // Very Light Green
-    
-    // Other
-    'Other': '#F8C471', // Orange
-    'Miscellaneous': '#F8C471', // Orange
-    'Gifts': '#FAD7A0', // Light Orange
-    'Donations': '#FCF3CF', // Very Light Orange
+  // Get category colors from the store
+  const getCategoryColor = (categoryName: string) => {
+    const category = categories.find(c => c.name === categoryName)
+    return category?.color || '#6C5CE7' // Default purple color
   }
 
   useEffect(() => {
@@ -107,8 +43,8 @@ export function CategorySpendingChart() {
 
     return Object.entries(categoryTotals)
       .map(([category, amount]) => {
-        // Use predefined colors or fallback to a default color
-        const color = categoryColors[category as keyof typeof categoryColors] || '#6C5CE7'
+        // Use dynamic colors from the store
+        const color = getCategoryColor(category)
         return {
           name: category,
           value: amount,

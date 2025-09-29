@@ -7,6 +7,8 @@ A modern, AI-powered personal budgeting application built with Next.js 15, React
 
 > 💡 **Personal Project**: This is my hobby app to manage my personal finances. Built with features I actually need for tracking my own spending, budgeting, and financial insights.
 
+> ⚠️ **ALPHA VERSION WARNING**: This project is still in alpha (v0.0.1) and many features may not work properly yet. Use at your own risk!
+
 ## ✨ Features
 
 ### 📊 Dashboard

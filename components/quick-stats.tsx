@@ -7,11 +7,12 @@ import { useTransactionStore } from "@/lib/store"
 import { motion } from "framer-motion"
 
 export function QuickStats() {
-  const { transactions, loadTransactions } = useTransactionStore()
+  const { transactions, budgets, loadTransactions, loadBudgets } = useTransactionStore()
 
   useEffect(() => {
     loadTransactions()
-  }, [loadTransactions])
+    loadBudgets()
+  }, [loadTransactions, loadBudgets])
 
   const stats = useMemo(() => {
     const currentMonth = new Date()
@@ -40,10 +41,11 @@ export function QuickStats() {
 
     const spendingChange = prevMonthSpending > 0 ? ((monthlySpending - prevMonthSpending) / prevMonthSpending) * 100 : 0
 
-    // Mock budget data (will be replaced with real budget system later)
-    const monthlyBudget = 2500
-    const budgetRemaining = monthlyBudget - monthlySpending
-    const budgetUsedPercentage = (monthlySpending / monthlyBudget) * 100
+    // Calculate total monthly budget from actual budgets
+    const monthlyBudgets = budgets.filter(b => b.period === 'monthly')
+    const totalMonthlyBudget = monthlyBudgets.reduce((sum, budget) => sum + budget.amount, 0)
+    const budgetRemaining = totalMonthlyBudget - monthlySpending
+    const budgetUsedPercentage = totalMonthlyBudget > 0 ? (monthlySpending / totalMonthlyBudget) * 100 : 0
 
     return [
       {
@@ -62,9 +64,9 @@ export function QuickStats() {
       },
       {
         title: "Budget Remaining",
-        value: `$${budgetRemaining.toFixed(2)}`,
-        change: `${budgetUsedPercentage.toFixed(0)}% used`,
-        trend: budgetUsedPercentage > 80 ? "up" : "neutral",
+        value: totalMonthlyBudget > 0 ? `$${budgetRemaining.toFixed(2)}` : "No budgets set",
+        change: totalMonthlyBudget > 0 ? `${budgetUsedPercentage.toFixed(0)}% used` : "Create budgets to track",
+        trend: totalMonthlyBudget > 0 ? (budgetUsedPercentage > 80 ? "up" : "neutral") : "neutral",
         icon: Target,
       },
       {
@@ -75,7 +77,7 @@ export function QuickStats() {
         icon: TrendingUp,
       },
     ]
-  }, [transactions])
+  }, [transactions, budgets])
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

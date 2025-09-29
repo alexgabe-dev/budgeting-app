@@ -19,6 +19,7 @@ import {
   AreaChart,
 } from "recharts"
 import type { Transaction } from "@/lib/database"
+import { useSettingsStore, formatCurrency } from "@/lib/settings-store"
 import { motion } from "framer-motion"
 
 interface AdvancedChartsProps {
@@ -27,6 +28,8 @@ interface AdvancedChartsProps {
 }
 
 export function AdvancedCharts({ transactions, dateRange }: AdvancedChartsProps) {
+  const { settings } = useSettingsStore()
+  
   const chartData = useMemo(() => {
     const filteredTransactions = transactions.filter(
       (t) => new Date(t.date) >= dateRange.start && new Date(t.date) <= dateRange.end,
@@ -51,6 +54,12 @@ export function AdvancedCharts({ transactions, dateRange }: AdvancedChartsProps)
     const monthlyTrend = Object.entries(monthlyData)
       .map(([month, data]) => ({ month, ...data }))
       .sort((a, b) => new Date(a.month).getTime() - new Date(b.month).getTime())
+    
+    // Add fallback data if no transactions
+    if (monthlyTrend.length === 0) {
+      const currentMonth = new Date().toLocaleDateString("en-US", { year: "numeric", month: "short" })
+      monthlyTrend.push({ month: currentMonth, income: 0, expenses: 0, net: 0 })
+    }
 
     // Category spending data
     const categoryData: Record<string, number> = {}
@@ -64,6 +73,11 @@ export function AdvancedCharts({ transactions, dateRange }: AdvancedChartsProps)
       .map(([category, amount]) => ({ category, amount }))
       .sort((a, b) => b.amount - a.amount)
       .slice(0, 8)
+    
+    // Add fallback data if no categories
+    if (categoryChart.length === 0) {
+      categoryChart.push({ category: "No Data", amount: 0 })
+    }
 
     // Daily spending pattern
     const dailyPattern: Record<string, number> = {}
@@ -80,6 +94,12 @@ export function AdvancedCharts({ transactions, dateRange }: AdvancedChartsProps)
       day: day.slice(0, 3),
       amount: dailyPattern[day] || 0,
     }))
+    
+    // Ensure we have data for all days
+    if (dailyChart.every(d => d.amount === 0)) {
+      // Add a small amount to Monday to show the chart isn't broken
+      dailyChart[1].amount = 0.01
+    }
 
     // Weekly spending trend
     const weeklyData: Record<string, number> = {}
@@ -96,6 +116,12 @@ export function AdvancedCharts({ transactions, dateRange }: AdvancedChartsProps)
       .map(([week, amount]) => ({ week, amount }))
       .sort((a, b) => new Date(a.week).getTime() - new Date(b.week).getTime())
       .slice(-8) // Last 8 weeks
+    
+    // Add fallback data if no weekly data
+    if (weeklyTrend.length === 0) {
+      const currentWeek = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" })
+      weeklyTrend.push({ week: currentWeek, amount: 0 })
+    }
 
     return {
       monthlyTrend,
@@ -106,11 +132,14 @@ export function AdvancedCharts({ transactions, dateRange }: AdvancedChartsProps)
   }, [transactions, dateRange])
 
   const colors = [
-    "hsl(var(--chart-1))",
-    "hsl(var(--chart-2))",
-    "hsl(var(--chart-3))",
-    "hsl(var(--chart-4))",
-    "hsl(var(--chart-5))",
+    "#3b82f6", // Blue
+    "#ef4444", // Red  
+    "#10b981", // Green
+    "#f59e0b", // Yellow
+    "#8b5cf6", // Purple
+    "#06b6d4", // Cyan
+    "#f97316", // Orange
+    "#84cc16", // Lime
   ]
 
   return (
@@ -125,31 +154,32 @@ export function AdvancedCharts({ transactions, dateRange }: AdvancedChartsProps)
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <AreaChart data={chartData.monthlyTrend}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis dataKey="month" stroke="#9ca3af" fontSize={12} />
+                <YAxis stroke="#9ca3af" fontSize={12} />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: "hsl(var(--popover))",
-                    border: "1px solid hsl(var(--border))",
+                    backgroundColor: "#1f2937",
+                    border: "1px solid #374151",
                     borderRadius: "8px",
+                    color: "#f9fafb"
                   }}
-                  formatter={(value: number, name: string) => [`$${value.toFixed(2)}`, name]}
+                  formatter={(value: number, name: string) => [formatCurrency(value, settings.currency, settings.showCents), name]}
                 />
                 <Area
                   type="monotone"
                   dataKey="income"
                   stackId="1"
-                  stroke="hsl(var(--chart-1))"
-                  fill="hsl(var(--chart-1))"
+                  stroke={colors[0]}
+                  fill={colors[0]}
                   fillOpacity={0.6}
                 />
                 <Area
                   type="monotone"
                   dataKey="expenses"
                   stackId="2"
-                  stroke="hsl(var(--chart-4))"
-                  fill="hsl(var(--chart-4))"
+                  stroke={colors[1]}
+                  fill={colors[1]}
                   fillOpacity={0.6}
                 />
               </AreaChart>
@@ -183,11 +213,12 @@ export function AdvancedCharts({ transactions, dateRange }: AdvancedChartsProps)
                 </Pie>
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: "hsl(var(--popover))",
-                    border: "1px solid hsl(var(--border))",
+                    backgroundColor: "#1f2937",
+                    border: "1px solid #374151",
                     borderRadius: "8px",
+                    color: "#f9fafb"
                   }}
-                  formatter={(value: number) => [`$${value.toFixed(2)}`, "Amount"]}
+                  formatter={(value: number) => [formatCurrency(value, settings.currency, settings.showCents), "Amount"]}
                 />
               </PieChart>
             </ResponsiveContainer>
@@ -209,18 +240,19 @@ export function AdvancedCharts({ transactions, dateRange }: AdvancedChartsProps)
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={chartData.dailyChart}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis dataKey="day" stroke="#9ca3af" fontSize={12} />
+                <YAxis stroke="#9ca3af" fontSize={12} />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: "hsl(var(--popover))",
-                    border: "1px solid hsl(var(--border))",
+                    backgroundColor: "#1f2937",
+                    border: "1px solid #374151",
                     borderRadius: "8px",
+                    color: "#f9fafb"
                   }}
-                  formatter={(value: number) => [`$${value.toFixed(2)}`, "Amount"]}
+                  formatter={(value: number) => [formatCurrency(value, settings.currency, settings.showCents), "Amount"]}
                 />
-                <Bar dataKey="amount" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="amount" fill={colors[2]} radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -241,23 +273,24 @@ export function AdvancedCharts({ transactions, dateRange }: AdvancedChartsProps)
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={chartData.weeklyTrend}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="week" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis dataKey="week" stroke="#9ca3af" fontSize={12} />
+                <YAxis stroke="#9ca3af" fontSize={12} />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: "hsl(var(--popover))",
-                    border: "1px solid hsl(var(--border))",
+                    backgroundColor: "#1f2937",
+                    border: "1px solid #374151",
                     borderRadius: "8px",
+                    color: "#f9fafb"
                   }}
-                  formatter={(value: number) => [`$${value.toFixed(2)}`, "Amount"]}
+                  formatter={(value: number) => [formatCurrency(value, settings.currency, settings.showCents), "Amount"]}
                 />
                 <Line
                   type="monotone"
                   dataKey="amount"
-                  stroke="hsl(var(--chart-3))"
+                  stroke={colors[3]}
                   strokeWidth={3}
-                  dot={{ fill: "hsl(var(--chart-3))", strokeWidth: 2, r: 4 }}
+                  dot={{ fill: colors[3], strokeWidth: 2, r: 4 }}
                 />
               </LineChart>
             </ResponsiveContainer>

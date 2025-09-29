@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { TrendingUp, TrendingDown, DollarSign, PieChart } from "lucide-react"
 import type { Transaction } from "@/lib/database"
+import { useSettingsStore, formatCurrency } from "@/lib/settings-store"
 import { motion } from "framer-motion"
 
 interface FinancialSummaryProps {
@@ -13,6 +14,8 @@ interface FinancialSummaryProps {
 }
 
 export function FinancialSummary({ transactions, dateRange }: FinancialSummaryProps) {
+  const { settings } = useSettingsStore()
+  
   const summary = useMemo(() => {
     const filteredTransactions = transactions.filter(
       (t) => new Date(t.date) >= dateRange.start && new Date(t.date) <= dateRange.end,
@@ -59,21 +62,21 @@ export function FinancialSummary({ transactions, dateRange }: FinancialSummaryPr
   const summaryCards = [
     {
       title: "Total Income",
-      value: `$${summary.totalIncome.toFixed(2)}`,
+      value: formatCurrency(summary.totalIncome, settings.currency, settings.showCents),
       icon: TrendingUp,
       color: "text-chart-1",
       bgColor: "bg-chart-1/10",
     },
     {
       title: "Total Expenses",
-      value: `$${summary.totalExpenses.toFixed(2)}`,
+      value: formatCurrency(summary.totalExpenses, settings.currency, settings.showCents),
       icon: TrendingDown,
       color: "text-chart-4",
       bgColor: "bg-chart-4/10",
     },
     {
       title: "Net Income",
-      value: `$${summary.netIncome.toFixed(2)}`,
+      value: formatCurrency(summary.netIncome, settings.currency, settings.showCents),
       icon: DollarSign,
       color: summary.netIncome >= 0 ? "text-chart-1" : "text-destructive",
       bgColor: summary.netIncome >= 0 ? "bg-chart-1/10" : "bg-destructive/10",
@@ -137,7 +140,7 @@ export function FinancialSummary({ transactions, dateRange }: FinancialSummaryPr
               </div>
               <div className="space-y-2">
                 <p className="text-sm font-medium">Avg Transaction</p>
-                <p className="text-2xl font-bold text-foreground">${summary.avgTransactionSize.toFixed(2)}</p>
+                <p className="text-2xl font-bold text-foreground">{formatCurrency(summary.avgTransactionSize, settings.currency, settings.showCents)}</p>
               </div>
               <div className="space-y-2">
                 <p className="text-sm font-medium">Categories Used</p>
@@ -147,7 +150,7 @@ export function FinancialSummary({ transactions, dateRange }: FinancialSummaryPr
                 <p className="text-sm font-medium">Top Category</p>
                 <div className="flex items-center space-x-2">
                   <Badge variant="outline">{summary.topCategory.category}</Badge>
-                  <span className="text-sm text-muted-foreground">${summary.topCategory.amount.toFixed(2)}</span>
+                  <span className="text-sm text-muted-foreground">{formatCurrency(summary.topCategory.amount, settings.currency, settings.showCents)}</span>
                 </div>
               </div>
             </div>

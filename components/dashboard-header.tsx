@@ -38,9 +38,6 @@ export function DashboardHeader() {
               <Link href="/budgets" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                 Budgets
               </Link>
-              <Link href="/insights" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                AI Insights
-              </Link>
               <Link href="/reports" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                 Reports
               </Link>

@@ -36,7 +36,7 @@ export interface AppSettings {
   currency: Currency
   dateFormat: "MM/DD/YYYY" | "DD/MM/YYYY" | "YYYY-MM-DD"
   fiscalYearStart: number // Month (0-11)
-  defaultView: "dashboard" | "transactions" | "budgets" | "insights"
+  defaultView: "dashboard" | "transactions" | "budgets"
   compactMode: boolean
   autoSave: boolean
   showCents: boolean

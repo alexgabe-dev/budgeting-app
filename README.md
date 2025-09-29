@@ -119,8 +119,7 @@ mbudgeting-app/
 ├── lib/                  # Utility libraries
 │   ├── database.ts       # Database configuration
 │   ├── store.ts          # State management
-│   ├── utils.ts          # Helper functions
-│   └── ai-insights.ts    # AI insights logic
+│   └── utils.ts          # Helper functions
 ├── hooks/                # Custom React hooks
 ├── public/               # Static assets
 └── styles/               # Global styles

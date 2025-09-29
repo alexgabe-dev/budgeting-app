@@ -3,8 +3,6 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -16,9 +14,6 @@ import {
   PieChart, 
   AlertTriangle,
   CheckCircle,
-  Plus,
-  Edit,
-  Trash2,
   Calendar,
   Wallet,
   CreditCard,
@@ -54,20 +49,27 @@ interface BudgetRule {
 }
 
 export function BudgetManagement() {
-  const { transactions, budgets, loadTransactions, loadBudgets, addBudget, updateBudget, deleteBudget } = useTransactionStore()
+  const { transactions, budgetRules, loadTransactions, loadBudgetRules, getBudgetRuleProgress } = useTransactionStore()
   const { settings } = useSettingsStore()
   
   const [isLoading, setIsLoading] = useState(false)
-  const [showCreateDialog, setShowCreateDialog] = useState(false)
-  const [editingBudget, setEditingBudget] = useState<Budget | null>(null)
-  const [newBudget, setNewBudget] = useState({
-    category: "",
-    amount: 0,
-    period: "monthly" as const
-  })
 
-  // 50/30/20 Rule presets
-  const budgetRules: BudgetRule[] = [
+  // Icon mapping function
+  const getIconComponent = (iconName: string) => {
+    const iconMap: Record<string, any> = {
+      'Home': Home,
+      'ShoppingBag': ShoppingBag,
+      'PiggyBank': PiggyBank,
+      'Target': Target,
+      'DollarSign': DollarSign,
+      'CreditCard': CreditCard,
+      'Wallet': Wallet
+    }
+    return iconMap[iconName] || Target // Default to Target if icon not found
+  }
+
+  // 50/30/20 Rule presets (these are just for display, actual rules come from the store)
+  const defaultBudgetRules: BudgetRule[] = [
     {
       name: "Needs (50%)",
       percentage: 50,
@@ -93,8 +95,8 @@ export function BudgetManagement() {
 
   useEffect(() => {
     loadTransactions()
-    loadBudgets()
-  }, [loadTransactions, loadBudgets])
+    loadBudgetRules()
+  }, [loadTransactions, loadBudgetRules])
 
   const currentMonth = new Date()
   const startOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1)
@@ -110,74 +112,32 @@ export function BudgetManagement() {
     .filter(t => t.amount < 0 && new Date(t.date) >= startOfMonth && new Date(t.date) <= endOfMonth)
     .reduce((sum, t) => sum + Math.abs(t.amount), 0)
 
-  // Calculate budget performance
-  const budgetPerformance = budgets.map(budget => {
-    const categorySpending = transactions
-      .filter(t => 
-        t.category === budget.category && 
-        t.amount < 0 && 
-        new Date(t.date) >= startOfMonth && 
-        new Date(t.date) <= endOfMonth
-      )
-      .reduce((sum, t) => sum + Math.abs(t.amount), 0)
 
-    const percentage = budget.amount > 0 ? (categorySpending / budget.amount) * 100 : 0
-    const isOverBudget = percentage > 100
-    const isNearLimit = percentage > 80
+  // Calculate budget rule performance
+  const budgetPerformance = budgetRules.map(rule => {
+    const progress = getBudgetRuleProgress(rule.id!, monthlyIncome)
+    const isOverBudget = progress.percentage > 100
+    const isNearLimit = progress.percentage >= 80 && progress.percentage < 100
 
     return {
-      ...budget,
-      spent: categorySpending,
-      remaining: budget.amount - categorySpending,
-      percentage: Math.min(percentage, 100),
+      id: rule.id,
+      category: rule.name,
+      amount: progress.budget,
+      period: "monthly" as const,
+      isActive: true,
+      createdAt: rule.createdAt || new Date(),
+      updatedAt: rule.updatedAt || new Date(),
+      spent: progress.spent,
+      remaining: progress.remaining,
+      percentage: progress.percentage,
       isOverBudget,
-      isNearLimit
+      isNearLimit,
+      color: rule.color,
+      icon: rule.icon
     }
-  })
+  }).filter(rule => rule.amount > 0).sort((a, b) => b.percentage - a.percentage)
 
-  const handleCreateBudget = async () => {
-    if (!newBudget.category || newBudget.amount <= 0) return
 
-    setIsLoading(true)
-    try {
-      await addBudget({
-        category: newBudget.category,
-        amount: newBudget.amount,
-        period: newBudget.period,
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      })
-      
-      setNewBudget({ category: "", amount: 0, period: "monthly" })
-      setShowCreateDialog(false)
-    } catch (error) {
-      console.error("Failed to create budget:", error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleDeleteBudget = async (budgetId: number) => {
-    if (!window.confirm("Are you sure you want to delete this budget?")) return
-
-    setIsLoading(true)
-    try {
-      await deleteBudget(budgetId)
-    } catch (error) {
-      console.error("Failed to delete budget:", error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const applyBudgetRule = (rule: BudgetRule) => {
-    const amount = (monthlyIncome * rule.percentage) / 100
-    setNewBudget(prev => ({
-      ...prev,
-      amount: Math.round(amount)
-    }))
-  }
 
   return (
     <div className="space-y-6">
@@ -187,10 +147,6 @@ export function BudgetManagement() {
           <h2 className="text-2xl font-bold text-foreground">Budget Management</h2>
           <p className="text-muted-foreground">Plan, track, and control your spending</p>
         </div>
-        <Button onClick={() => setShowCreateDialog(true)} className="bg-primary hover:bg-primary/90">
-          <Plus className="h-4 w-4 mr-2" />
-          Create Budget
-        </Button>
       </div>
 
       {/* Financial Overview */}
@@ -293,7 +249,10 @@ export function BudgetManagement() {
                       className="p-2 rounded-lg"
                       style={{ backgroundColor: `${rule.color}20` }}
                     >
-                      <rule.icon className="h-5 w-5" style={{ color: rule.color }} />
+                      {(() => {
+                        const IconComponent = getIconComponent(rule.icon)
+                        return <IconComponent className="h-5 w-5" style={{ color: rule.color }} />
+                      })()}
                     </div>
                     <div>
                       <h3 className="font-semibold text-foreground">{rule.name}</h3>
@@ -368,14 +327,6 @@ export function BudgetManagement() {
                           <span>On Track</span>
                         </Badge>
                       )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteBudget(budget.id!)}
-                        className="text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
                     </div>
                   </div>
                   
@@ -410,60 +361,6 @@ export function BudgetManagement() {
       {/* Debt Tracking Section */}
       <DebtTracking />
 
-      {/* Create Budget Dialog */}
-      {showCreateDialog && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-background border rounded-lg p-6 w-full max-w-md mx-4"
-          >
-            <h3 className="text-lg font-semibold mb-4">Create New Budget</h3>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="category">Category</Label>
-                <Input
-                  id="category"
-                  value={newBudget.category}
-                  onChange={(e) => setNewBudget(prev => ({ ...prev, category: e.target.value }))}
-                  placeholder="e.g., Food & Dining"
-                />
-              </div>
-              <div>
-                <Label htmlFor="amount">Amount</Label>
-                <Input
-                  id="amount"
-                  type="number"
-                  value={newBudget.amount}
-                  onChange={(e) => setNewBudget(prev => ({ ...prev, amount: Number(e.target.value) }))}
-                  placeholder="0"
-                />
-              </div>
-              <div>
-                <Label htmlFor="period">Period</Label>
-                <select
-                  id="period"
-                  value={newBudget.period}
-                  onChange={(e) => setNewBudget(prev => ({ ...prev, period: e.target.value as any }))}
-                  className="w-full p-2 border rounded-md"
-                >
-                  <option value="monthly">Monthly</option>
-                  <option value="weekly">Weekly</option>
-                  <option value="yearly">Yearly</option>
-                </select>
-              </div>
-            </div>
-            <div className="flex justify-end space-x-2 mt-6">
-              <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleCreateBudget} disabled={isLoading}>
-                Create Budget
-              </Button>
-            </div>
-          </motion.div>
-        </div>
-      )}
     </div>
   )
 }

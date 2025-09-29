@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata = {
   title: "Lumo - Simple Budgeting App",
-  description: "AI-powered personal budgeting app with offline-first design and electric insights"
+  description: "Personal budgeting app with offline-first design and comprehensive financial tracking"
 }
 
 export default function RootLayout({

@@ -6,6 +6,9 @@ import { DateRangePicker } from "@/components/date-range-picker"
 import { FinancialSummary } from "@/components/financial-summary"
 import { AdvancedCharts } from "@/components/advanced-charts"
 import { ExportData } from "@/components/export-data"
+import { SpendingCalendar } from "@/components/spending-calendar"
+import { BudgetRuleProgress } from "@/components/budget-rule-progress"
+import { DetailedMetrics } from "@/components/detailed-metrics"
 import { useTransactionStore } from "@/lib/store"
 
 export default function ReportsPage() {
@@ -36,6 +39,9 @@ export default function ReportsPage() {
         </div>
 
         <FinancialSummary transactions={transactions} dateRange={dateRange} />
+        <BudgetRuleProgress />
+        <DetailedMetrics transactions={transactions} dateRange={dateRange} />
+        <SpendingCalendar transactions={transactions} dateRange={dateRange} />
         <AdvancedCharts transactions={transactions} dateRange={dateRange} />
         <ExportData transactions={transactions} dateRange={dateRange} />
       </main>

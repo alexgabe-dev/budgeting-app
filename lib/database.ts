@@ -1497,6 +1497,14 @@ export class BudgetDatabase extends Dexie {
         console.warn("Failed to clear users:", error)
       }
       
+      // Clear localStorage to remove debt tracking data and other local storage
+      try {
+        localStorage.clear()
+        console.log("✓ LocalStorage cleared (including debt tracking data)")
+      } catch (error) {
+        console.warn("Failed to clear localStorage:", error)
+      }
+      
       // Re-initialize default data after clearing (but NOT demo data)
       console.log("Re-initializing default data...")
       await this.initializeDefaultCategories()

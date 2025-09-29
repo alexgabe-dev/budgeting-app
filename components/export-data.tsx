@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Download, FileText, Database } from "lucide-react"
 import type { Transaction } from "@/lib/database"
+import { useSettingsStore, formatCurrency } from "@/lib/settings-store"
 
 interface ExportDataProps {
   transactions: Transaction[]
@@ -11,6 +12,8 @@ interface ExportDataProps {
 }
 
 export function ExportData({ transactions, dateRange }: ExportDataProps) {
+  const { settings } = useSettingsStore()
+  
   const filteredTransactions = transactions.filter(
     (t) => new Date(t.date) >= dateRange.start && new Date(t.date) <= dateRange.end,
   )
@@ -93,9 +96,9 @@ Generated: ${new Date().toLocaleString()}
 
 SUMMARY
 =======
-Total Income: $${totalIncome.toFixed(2)}
-Total Expenses: $${totalExpenses.toFixed(2)}
-Net Income: $${netIncome.toFixed(2)}
+Total Income: ${formatCurrency(totalIncome, settings.currency, settings.showCents)}
+Total Expenses: ${formatCurrency(totalExpenses, settings.currency, settings.showCents)}
+Net Income: ${formatCurrency(netIncome, settings.currency, settings.showCents)}
 Savings Rate: ${totalIncome > 0 ? ((netIncome / totalIncome) * 100).toFixed(1) : 0}%
 Total Transactions: ${filteredTransactions.length}
 
@@ -103,7 +106,7 @@ SPENDING BY CATEGORY
 ===================
 ${Object.entries(categorySpending)
   .sort(([, a], [, b]) => b - a)
-  .map(([category, amount]) => `${category}: $${amount.toFixed(2)}`)
+  .map(([category, amount]) => `${category}: ${formatCurrency(amount, settings.currency, settings.showCents)}`)
   .join("\n")}
 
 RECENT TRANSACTIONS
@@ -112,7 +115,7 @@ ${filteredTransactions
   .slice(0, 10)
   .map(
     (t) =>
-      `${new Date(t.date).toLocaleDateString()} | ${t.description} | ${t.amount < 0 ? "-" : "+"}$${Math.abs(t.amount).toFixed(2)} | ${t.category}`,
+      `${new Date(t.date).toLocaleDateString()} | ${t.description} | ${t.amount < 0 ? "-" : "+"}${formatCurrency(Math.abs(t.amount), settings.currency, settings.showCents)} | ${t.category}`,
   )
   .join("\n")}
 ${filteredTransactions.length > 10 ? `\n... and ${filteredTransactions.length - 10} more transactions` : ""}

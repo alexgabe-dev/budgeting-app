@@ -277,7 +277,7 @@ export default function SettingsPage() {
                       <Label htmlFor="defaultView">Default View</Label>
                       <Select
                         value={settings.defaultView}
-                        onValueChange={(value: "dashboard" | "transactions" | "budgets" | "insights") => 
+                        onValueChange={(value: "dashboard" | "transactions" | "budgets") => 
                           handleSettingChange(
                             "Default View",
                             value,
@@ -292,7 +292,6 @@ export default function SettingsPage() {
                           <SelectItem value="dashboard">Dashboard</SelectItem>
                           <SelectItem value="transactions">Transactions</SelectItem>
                           <SelectItem value="budgets">Budgets</SelectItem>
-                          <SelectItem value="insights">Insights</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -336,6 +335,59 @@ export default function SettingsPage() {
                         )
                       }
                     />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <DollarSign className="h-5 w-5" />
+                    <span>Currency</span>
+                  </CardTitle>
+                  <CardDescription>Set your preferred currency and formatting</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="currency">Currency</Label>
+                    <Select
+                      value={settings.currency.code}
+                      onValueChange={(value) => {
+                        const currency = CURRENCY_OPTIONS.find(c => c.code === value)
+                        if (currency) {
+                          handleSettingChange(
+                            "Currency",
+                            currency.name,
+                            () => updateSettings({ currency })
+                          )
+                        }
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {CURRENCY_OPTIONS.map((currency) => (
+                          <SelectItem key={currency.code} value={currency.code}>
+                            <div className="flex items-center space-x-2">
+                              <span>{currency.symbol}</span>
+                              <span>{currency.name}</span>
+                              <Badge variant="outline">{currency.code}</Badge>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="p-4 bg-muted rounded-lg">
+                    <h4 className="font-medium mb-2">Preview</h4>
+                    <div className="space-y-2 text-sm">
+                      <p>Sample amounts:</p>
+                      <p className="font-mono">{formatCurrency(1234.56, settings.currency, settings.showCents)}</p>
+                      <p className="font-mono">{formatCurrency(0.99, settings.currency, settings.showCents)}</p>
+                      <p className="font-mono">{formatCurrency(1000000, settings.currency, settings.showCents)}</p>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

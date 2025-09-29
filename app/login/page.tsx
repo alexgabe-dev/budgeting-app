@@ -64,13 +64,13 @@ export default function LoginPage() {
   }
 
   const handleDemoLogin = async () => {
-    setEmail("gabor.sandor@vizitor.hu") //demo:email
-    setPassword("192212") //demo:pw
+    setEmail("demo@lumo.app") //demo:email
+    setPassword("demo123") //demo:pw
     setError("")
     setSuccess("")
     
     // Auto-submit demo login
-    const result = await login("gabor.sandor@vizitor.hu", "192212")
+    const result = await login("demo@lumo.app", "demo123")
     
     if (result.success) {
       setSuccess("Demo login successful! Redirecting...")

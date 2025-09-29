@@ -49,12 +49,16 @@ export function QuickStats() {
     const budgetRemaining = totalMonthlyBudget - monthlySpending
     const budgetUsedPercentage = totalMonthlyBudget > 0 ? (monthlySpending / totalMonthlyBudget) * 100 : 0
 
+    // Calculate balance change from previous month
+    const prevMonthBalance = prevMonthTransactions.reduce((sum, t) => sum + t.amount, 0)
+    const balanceChange = prevMonthBalance !== 0 ? ((totalBalance - prevMonthBalance) / Math.abs(prevMonthBalance)) * 100 : 0
+
     return [
       {
         title: "Total Balance",
         value: formatCurrency(totalBalance, settings.currency, settings.showCents),
-        change: totalBalance >= 0 ? "+0.0%" : "-0.0%",
-        trend: totalBalance >= 0 ? "up" : "down",
+        change: `${balanceChange >= 0 ? "+" : ""}${balanceChange.toFixed(1)}%`,
+        trend: balanceChange >= 0 ? "up" : "down",
         icon: DollarSign,
       },
       {

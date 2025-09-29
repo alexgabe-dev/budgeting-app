@@ -40,8 +40,9 @@ export function FinancialSummary({ transactions, dateRange }: FinancialSummaryPr
 
     // Transaction count
     const transactionCount = filteredTransactions.length
+    const expenseTransactions = filteredTransactions.filter((t) => t.amount < 0)
     const avgTransactionSize =
-      transactionCount > 0 ? totalExpenses / filteredTransactions.filter((t) => t.amount < 0).length : 0
+      expenseTransactions.length > 0 ? totalExpenses / expenseTransactions.length : 0
 
     return {
       totalIncome,

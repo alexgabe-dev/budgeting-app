@@ -8,15 +8,21 @@ import { BudgetOverview } from "@/components/budget-overview"
 import { SpendingBreakdownChart } from "@/components/spending-breakdown-chart"
 import { AuthWrapper } from "@/components/auth-wrapper"
 import { useSettingsStore } from "@/lib/settings-store"
+import { useTransactionStore } from "@/lib/store"
 
 export default function Dashboard() {
   const { settings } = useSettingsStore()
+  const { loadCategories, loadTransactions, loadBudgets } = useTransactionStore()
   const isCompact = settings.compactMode
   const [isClient, setIsClient] = useState(false)
 
   useEffect(() => {
     setIsClient(true)
-  }, [])
+    // Load initial data when component mounts
+    loadCategories()
+    loadTransactions()
+    loadBudgets()
+  }, [loadCategories, loadTransactions, loadBudgets])
 
   if (!isClient) {
     return (

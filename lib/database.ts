@@ -9,6 +9,7 @@ export interface Transaction {
   type: "income" | "expense"
   tags?: string[]
   notes?: string
+  userId?: number
   createdAt: Date
   updatedAt: Date
 }
@@ -21,6 +22,7 @@ export interface Budget {
   startDate?: Date
   endDate?: Date
   isActive: boolean
+  userId?: number
   createdAt: Date
   updatedAt: Date
 }
@@ -32,6 +34,7 @@ export interface Category {
   icon: string
   type: "income" | "expense"
   isDefault: boolean
+  userId?: number
   createdAt: Date
   updatedAt: Date
 }
@@ -74,10 +77,10 @@ export class BudgetDatabase extends Dexie {
   constructor() {
     super("Lumo")
 
-    this.version(4).stores({
-      transactions: "++id, description, amount, category, date, type, createdAt, updatedAt",
-      budgets: "++id, category, amount, period, isActive, createdAt, updatedAt",
-      categories: "++id, name, type, isDefault, createdAt, updatedAt, [name+type]",
+    this.version(5).stores({
+      transactions: "++id, description, amount, category, date, type, userId, createdAt, updatedAt",
+      budgets: "++id, category, amount, period, isActive, userId, createdAt, updatedAt",
+      categories: "++id, name, type, isDefault, userId, createdAt, updatedAt, [name+type]",
       appSettings: "++id, key, type, updatedAt",
       dataBackups: "++id, name, version, createdAt",
       users: "++id, email, isActive, createdAt, updatedAt"
@@ -93,6 +96,8 @@ export class BudgetDatabase extends Dexie {
     await this.initializeDefaultCategories()
     await this.initializeDefaultSettings()
     await this.initializeDefaultUsers()
+    await this.migrateExistingData()
+    await this.cleanupExistingDemoData()
     await this.initializeDemoData()
   }
 
@@ -106,6 +111,7 @@ export class BudgetDatabase extends Dexie {
           icon: "UtensilsCrossed",
           type: "expense",
           isDefault: true,
+          userId: null,
           createdAt: new Date(),
           updatedAt: new Date(),
         },
@@ -115,6 +121,7 @@ export class BudgetDatabase extends Dexie {
           icon: "Car", 
           type: "expense", 
           isDefault: true,
+          userId: null,
           createdAt: new Date(),
           updatedAt: new Date(),
         },
@@ -124,6 +131,7 @@ export class BudgetDatabase extends Dexie {
           icon: "Gamepad2",
           type: "expense",
           isDefault: true,
+          userId: null,
           createdAt: new Date(),
           updatedAt: new Date(),
         },
@@ -133,6 +141,7 @@ export class BudgetDatabase extends Dexie {
           icon: "ShoppingBag", 
           type: "expense", 
           isDefault: true,
+          userId: null,
           createdAt: new Date(),
           updatedAt: new Date(),
         },
@@ -142,6 +151,7 @@ export class BudgetDatabase extends Dexie {
           icon: "Receipt",
           type: "expense",
           isDefault: true,
+          userId: null,
           createdAt: new Date(),
           updatedAt: new Date(),
         },
@@ -151,6 +161,7 @@ export class BudgetDatabase extends Dexie {
           icon: "Heart", 
           type: "expense", 
           isDefault: true,
+          userId: null,
           createdAt: new Date(),
           updatedAt: new Date(),
         },
@@ -160,6 +171,7 @@ export class BudgetDatabase extends Dexie {
           icon: "Banknote", 
           type: "income", 
           isDefault: true,
+          userId: null,
           createdAt: new Date(),
           updatedAt: new Date(),
         },
@@ -169,6 +181,7 @@ export class BudgetDatabase extends Dexie {
           icon: "Briefcase", 
           type: "income", 
           isDefault: true,
+          userId: null,
           createdAt: new Date(),
           updatedAt: new Date(),
         },
@@ -178,6 +191,7 @@ export class BudgetDatabase extends Dexie {
           icon: "TrendingUp", 
           type: "income", 
           isDefault: true,
+          userId: null,
           createdAt: new Date(),
           updatedAt: new Date(),
         },
@@ -246,10 +260,83 @@ export class BudgetDatabase extends Dexie {
     }
   }
 
+  private async cleanupExistingDemoData() {
+    try {
+      // Get demo user
+      const demoUser = await this.users.where("email").equals("demo@lumo.app").first()
+      if (!demoUser) return
+
+      // Update existing demo transactions to be associated with demo user
+      await this.transactions
+        .where("description")
+        .startsWith("Demo")
+        .modify({ userId: demoUser.id })
+
+      // Update existing demo budgets to be associated with demo user
+      await this.budgets
+        .where("category")
+        .anyOf(["Gym Membership", "Investment Returns", "Home Improvement", "Side Business"])
+        .modify({ userId: demoUser.id })
+
+      // Update existing demo categories to be associated with demo user
+      await this.categories
+        .where("name")
+        .anyOf(["Gym Membership", "Investment Returns", "Home Improvement", "Side Business"])
+        .modify({ userId: demoUser.id })
+
+      console.log("Demo data cleanup completed")
+    } catch (error) {
+      console.error("Error cleaning up demo data:", error)
+    }
+  }
+
+  private async migrateExistingData() {
+    try {
+      // Get the first user (gabor.sandor@vizitor.hu) to associate existing data
+      const firstUser = await this.users.where("email").equals("gabor.sandor@vizitor.hu").first()
+      if (!firstUser) return
+
+      // Update existing transactions without userId to belong to the first user
+      const transactionsWithoutUserId = await this.transactions
+        .filter(transaction => transaction.userId === undefined)
+        .toArray()
+      
+      for (const transaction of transactionsWithoutUserId) {
+        await this.transactions.update(transaction.id!, { userId: firstUser.id })
+      }
+
+      // Update existing budgets without userId to belong to the first user
+      const budgetsWithoutUserId = await this.budgets
+        .filter(budget => budget.userId === undefined)
+        .toArray()
+      
+      for (const budget of budgetsWithoutUserId) {
+        await this.budgets.update(budget.id!, { userId: firstUser.id })
+      }
+
+      // Update existing categories without userId to belong to the first user (except default ones)
+      const categoriesWithoutUserId = await this.categories
+        .filter(category => category.userId === undefined && !category.isDefault)
+        .toArray()
+      
+      for (const category of categoriesWithoutUserId) {
+        await this.categories.update(category.id!, { userId: firstUser.id })
+      }
+
+      console.log("Data migration completed")
+    } catch (error) {
+      console.error("Error migrating existing data:", error)
+    }
+  }
+
   private async initializeDemoData() {
     // Check if demo data already exists
     const existingDemoTransactions = await this.transactions.where("description").startsWith("Demo").count()
     if (existingDemoTransactions > 0) return // Demo data already exists
+
+    // Get the demo user ID
+    const demoUser = await this.users.where("email").equals("demo@lumo.app").first()
+    if (!demoUser) return // Demo user not found
 
     // Add custom demo categories first
     const customDemoCategories: Omit<Category, "id">[] = [
@@ -259,6 +346,7 @@ export class BudgetDatabase extends Dexie {
         icon: "Heart",
         type: "expense",
         isDefault: false,
+        userId: demoUser.id,
         createdAt: new Date(),
         updatedAt: new Date(),
       },
@@ -268,6 +356,7 @@ export class BudgetDatabase extends Dexie {
         icon: "TrendingUp",
         type: "income",
         isDefault: false,
+        userId: demoUser.id,
         createdAt: new Date(),
         updatedAt: new Date(),
       },
@@ -277,6 +366,7 @@ export class BudgetDatabase extends Dexie {
         icon: "Home",
         type: "expense",
         isDefault: false,
+        userId: demoUser.id,
         createdAt: new Date(),
         updatedAt: new Date(),
       },
@@ -286,6 +376,7 @@ export class BudgetDatabase extends Dexie {
         icon: "Briefcase",
         type: "income",
         isDefault: false,
+        userId: demoUser.id,
         createdAt: new Date(),
         updatedAt: new Date(),
       },
@@ -1004,7 +1095,13 @@ export class BudgetDatabase extends Dexie {
       },
     ]
 
-    await this.transactions.bulkAdd(demoTransactions)
+    // Add userId to all demo transactions
+    const demoTransactionsWithUserId = demoTransactions.map(transaction => ({
+      ...transaction,
+      userId: demoUser.id
+    }))
+
+    await this.transactions.bulkAdd(demoTransactionsWithUserId)
 
     // Comprehensive demo budgets
     const currentMonth = new Date()
@@ -1117,7 +1214,13 @@ export class BudgetDatabase extends Dexie {
       },
     ]
 
-    await this.budgets.bulkAdd(demoBudgets)
+    // Add userId to all demo budgets
+    const demoBudgetsWithUserId = demoBudgets.map(budget => ({
+      ...budget,
+      userId: demoUser.id
+    }))
+
+    await this.budgets.bulkAdd(demoBudgetsWithUserId)
 
     // Add demo debt data for debt tracking
     const demoDebts = [

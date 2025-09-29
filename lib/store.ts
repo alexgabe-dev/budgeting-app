@@ -1,5 +1,6 @@
 import { create } from "zustand"
 import { type Transaction, type Category, type Budget, db } from "./database"
+import { useUserStore } from "./user-store"
 
 interface TransactionStore {
   transactions: Transaction[]
@@ -39,8 +40,18 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
   loadTransactions: async () => {
     set({ isLoading: true })
     try {
-      const transactions = await db.transactions.orderBy("date").reverse().toArray()
-      set({ transactions, isLoading: false })
+      const { currentUser } = useUserStore.getState()
+      if (!currentUser) {
+        set({ transactions: [], isLoading: false })
+        return
+      }
+      
+      // Load all transactions and filter by user
+      const allTransactions = await db.transactions.orderBy("date").reverse().toArray()
+      const userTransactions = allTransactions.filter(transaction => 
+        transaction.userId === currentUser.id || transaction.userId === undefined
+      )
+      set({ transactions: userTransactions, isLoading: false })
     } catch (error) {
       console.error("Failed to load transactions:", error)
       set({ isLoading: false })
@@ -49,8 +60,24 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
 
   loadCategories: async () => {
     try {
-      const categories = await db.categories.toArray()
-      set({ categories })
+      const { currentUser } = useUserStore.getState()
+      if (!currentUser) {
+        set({ categories: [] })
+        return
+      }
+      
+      // Load user-specific categories and default categories (userId: null)
+      const userCategories = await db.categories
+        .where("userId")
+        .equals(currentUser.id)
+        .toArray()
+      
+      // Load all categories and filter for null userId (default categories)
+      const allCategoriesFromDb = await db.categories.toArray()
+      const defaultCategories = allCategoriesFromDb.filter(cat => cat.userId === null)
+      
+      const allCategories = [...userCategories, ...defaultCategories]
+      set({ categories: allCategories })
     } catch (error) {
       console.error("Failed to load categories:", error)
     }
@@ -58,9 +85,13 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
 
   addCategory: async (categoryData) => {
     try {
+      const { currentUser } = useUserStore.getState()
+      if (!currentUser) return
+      
       const now = new Date()
       const category: Omit<Category, "id"> = {
         ...categoryData,
+        userId: currentUser.id,
         createdAt: now,
         updatedAt: now,
       }
@@ -109,9 +140,13 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
 
   addTransaction: async (transactionData) => {
     try {
+      const { currentUser } = useUserStore.getState()
+      if (!currentUser) return
+      
       const now = new Date()
       const transaction: Omit<Transaction, "id"> = {
         ...transactionData,
+        userId: currentUser.id,
         createdAt: now,
         updatedAt: now,
       }
@@ -154,8 +189,18 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
 
   loadBudgets: async () => {
     try {
-      const budgets = await db.budgets.orderBy("createdAt").reverse().toArray()
-      set({ budgets })
+      const { currentUser } = useUserStore.getState()
+      if (!currentUser) {
+        set({ budgets: [] })
+        return
+      }
+      
+      // Load all budgets and filter by user
+      const allBudgets = await db.budgets.orderBy("createdAt").reverse().toArray()
+      const userBudgets = allBudgets.filter(budget => 
+        budget.userId === currentUser.id || budget.userId === undefined
+      )
+      set({ budgets: userBudgets })
     } catch (error) {
       console.error("Failed to load budgets:", error)
     }
@@ -163,9 +208,13 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
 
   addBudget: async (budgetData) => {
     try {
+      const { currentUser } = useUserStore.getState()
+      if (!currentUser) return
+      
       const now = new Date()
       const budget: Omit<Budget, "id"> = {
         ...budgetData,
+        userId: currentUser.id,
         createdAt: now,
         updatedAt: now,
       }
@@ -213,7 +262,9 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
 
     switch (budget.period) {
       case "weekly":
-        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay())
+        // Get the start of the current week (Sunday)
+        const dayOfWeek = now.getDay()
+        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dayOfWeek)
         endDate = new Date(startDate.getTime() + 7 * 24 * 60 * 60 * 1000)
         break
       case "yearly":

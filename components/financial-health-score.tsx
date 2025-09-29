@@ -53,10 +53,12 @@ export function FinancialHealthScore() {
       })
 
     const spendingValues = Object.values(dailySpending)
-    const avgDailySpending = spendingValues.reduce((sum, val) => sum + val, 0) / spendingValues.length
-    const variance =
-      spendingValues.reduce((sum, val) => sum + Math.pow(val - avgDailySpending, 2), 0) / spendingValues.length
-    const spendingConsistency = Math.max(0, 100 - (Math.sqrt(variance) / avgDailySpending) * 100)
+    const spendingConsistency = spendingValues.length === 0 ? 0 : (() => {
+      const avgDailySpending = spendingValues.reduce((sum, val) => sum + val, 0) / spendingValues.length
+      const variance =
+        spendingValues.reduce((sum, val) => sum + Math.pow(val - avgDailySpending, 2), 0) / spendingValues.length
+      return Math.max(0, 100 - (Math.sqrt(variance) / avgDailySpending) * 100)
+    })()
 
     let budgetAdherence = 100 // Default to 100 if no budgets
     if (budgets.length > 0) {

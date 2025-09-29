@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -29,7 +29,14 @@ export function AddTransactionDialog() {
     date: new Date().toISOString().split("T")[0],
   })
 
-  const { addTransaction, categories } = useTransactionStore()
+  const { addTransaction, categories, loadCategories } = useTransactionStore()
+
+  // Load categories when dialog opens
+  useEffect(() => {
+    if (open) {
+      loadCategories()
+    }
+  }, [open, loadCategories])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

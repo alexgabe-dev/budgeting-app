@@ -26,12 +26,14 @@ import {
   Tag,
   Plus,
   Trash2,
-  Edit
+  Edit,
+  Database
 } from "lucide-react"
 import { useSettingsStore, CURRENCY_OPTIONS, formatCurrency } from "@/lib/settings-store"
 import { useTransactionStore } from "@/lib/store"
 import { useTheme } from "next-themes"
 import { motion } from "framer-motion"
+import { DatabaseManagement } from "@/components/database-management"
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme()
@@ -109,11 +111,20 @@ export default function SettingsPage() {
         name: newCategoryName.trim(),
         color: newCategoryColor,
         icon: "Tag",
-        type: "expense" as const
+        type: "expense" as const,
+        isDefault: false,
+        createdAt: new Date(),
+        updatedAt: new Date()
       }
       await addCategory(newCategory)
       // Sync with settings store
-      const updatedCategories = [...categories, { ...newCategory, id: Date.now(), createdAt: new Date() }]
+      const updatedCategories = [...categories, { 
+        ...newCategory, 
+        id: Date.now(), 
+        isDefault: false,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }]
       updateCategories(updatedCategories)
       setNewCategoryName("")
       setNewCategoryColor("#FF6B6B")
@@ -213,7 +224,7 @@ export default function SettingsPage() {
           </div>
 
           <Tabs defaultValue="general" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="general" className="flex items-center space-x-2">
                 <Settings className="h-4 w-4" />
                 <span>General</span>
@@ -229,6 +240,10 @@ export default function SettingsPage() {
               <TabsTrigger value="categories" className="flex items-center space-x-2">
                 <Tag className="h-4 w-4" />
                 <span>Categories</span>
+              </TabsTrigger>
+              <TabsTrigger value="database" className="flex items-center space-x-2">
+                <Database className="h-4 w-4" />
+                <span>Database</span>
               </TabsTrigger>
               <TabsTrigger value="notifications" className="flex items-center space-x-2">
                 <Bell className="h-4 w-4" />
@@ -666,6 +681,10 @@ export default function SettingsPage() {
                   </div>
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            <TabsContent value="database" className="space-y-6">
+              <DatabaseManagement />
             </TabsContent>
 
             <TabsContent value="notifications" className="space-y-6">

@@ -8,6 +8,7 @@ export interface Transaction {
   date: Date
   type: "income" | "expense"
   tags?: string[]
+  notes?: string
   createdAt: Date
   updatedAt: Date
 }
@@ -17,6 +18,9 @@ export interface Budget {
   category: string
   amount: number
   period: "monthly" | "weekly" | "yearly"
+  startDate?: Date
+  endDate?: Date
+  isActive: boolean
   createdAt: Date
   updatedAt: Date
 }
@@ -27,6 +31,25 @@ export interface Category {
   color: string
   icon: string
   type: "income" | "expense"
+  isDefault: boolean
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface AppSettings {
+  id?: number
+  key: string
+  value: any
+  type: "string" | "number" | "boolean" | "object"
+  updatedAt: Date
+}
+
+export interface DataBackup {
+  id?: number
+  name: string
+  description?: string
+  data: any
+  version: string
   createdAt: Date
 }
 
@@ -34,19 +57,28 @@ export class BudgetDatabase extends Dexie {
   transactions!: Table<Transaction>
   budgets!: Table<Budget>
   categories!: Table<Category>
+  appSettings!: Table<AppSettings>
+  dataBackups!: Table<DataBackup>
 
   constructor() {
     super("Lumo")
 
-    this.version(1).stores({
-      transactions: "++id, description, amount, category, date, type, createdAt",
-      budgets: "++id, category, amount, period, createdAt",
-      categories: "++id, name, type, createdAt",
+    this.version(2).stores({
+      transactions: "++id, description, amount, category, date, type, createdAt, updatedAt",
+      budgets: "++id, category, amount, period, isActive, createdAt, updatedAt",
+      categories: "++id, name, type, isDefault, createdAt, updatedAt",
+      appSettings: "++id, key, type, updatedAt",
+      dataBackups: "++id, name, version, createdAt"
     })
 
     this.on("ready", () => {
-      return this.initializeDefaultCategories()
+      return this.initializeDatabase()
     })
+  }
+
+  private async initializeDatabase() {
+    await this.initializeDefaultCategories()
+    await this.initializeDefaultSettings()
   }
 
   private async initializeDefaultCategories() {
@@ -55,34 +87,229 @@ export class BudgetDatabase extends Dexie {
       const defaultCategories: Omit<Category, "id">[] = [
         {
           name: "Food & Dining",
-          color: "hsl(var(--chart-1))",
+          color: "#FF6B6B",
           icon: "UtensilsCrossed",
           type: "expense",
+          isDefault: true,
           createdAt: new Date(),
+          updatedAt: new Date(),
         },
-        { name: "Transportation", color: "hsl(var(--chart-2))", icon: "Car", type: "expense", createdAt: new Date() },
+        { 
+          name: "Transportation", 
+          color: "#45B7D1", 
+          icon: "Car", 
+          type: "expense", 
+          isDefault: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
         {
           name: "Entertainment",
-          color: "hsl(var(--chart-3))",
+          color: "#4ECDC4",
           icon: "Gamepad2",
           type: "expense",
+          isDefault: true,
           createdAt: new Date(),
+          updatedAt: new Date(),
         },
-        { name: "Shopping", color: "hsl(var(--chart-4))", icon: "ShoppingBag", type: "expense", createdAt: new Date() },
+        { 
+          name: "Shopping", 
+          color: "#96CEB4", 
+          icon: "ShoppingBag", 
+          type: "expense", 
+          isDefault: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
         {
           name: "Bills & Utilities",
-          color: "hsl(var(--chart-5))",
+          color: "#85C1E9",
           icon: "Receipt",
           type: "expense",
+          isDefault: true,
           createdAt: new Date(),
+          updatedAt: new Date(),
         },
-        { name: "Healthcare", color: "hsl(var(--chart-1))", icon: "Heart", type: "expense", createdAt: new Date() },
-        { name: "Salary", color: "hsl(var(--chart-2))", icon: "Banknote", type: "income", createdAt: new Date() },
-        { name: "Freelance", color: "hsl(var(--chart-3))", icon: "Briefcase", type: "income", createdAt: new Date() },
-        { name: "Investment", color: "hsl(var(--chart-4))", icon: "TrendingUp", type: "income", createdAt: new Date() },
+        { 
+          name: "Healthcare", 
+          color: "#FFEAA7", 
+          icon: "Heart", 
+          type: "expense", 
+          isDefault: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        { 
+          name: "Salary", 
+          color: "#82E0AA", 
+          icon: "Banknote", 
+          type: "income", 
+          isDefault: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        { 
+          name: "Freelance", 
+          color: "#DDA0DD", 
+          icon: "Briefcase", 
+          type: "income", 
+          isDefault: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        { 
+          name: "Investment", 
+          color: "#F7DC6F", 
+          icon: "TrendingUp", 
+          type: "income", 
+          isDefault: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
       ]
 
       await this.categories.bulkAdd(defaultCategories)
+    }
+  }
+
+  private async initializeDefaultSettings() {
+    const count = await this.appSettings.count()
+    if (count === 0) {
+      const defaultSettings: Omit<AppSettings, "id">[] = [
+        { key: "theme", value: "dark", type: "string", updatedAt: new Date() },
+        { key: "currency", value: { code: "USD", symbol: "$", name: "US Dollar", position: "before", decimalPlaces: 2 }, type: "object", updatedAt: new Date() },
+        { key: "compactMode", value: false, type: "boolean", updatedAt: new Date() },
+        { key: "showCents", value: true, type: "boolean", updatedAt: new Date() },
+        { key: "autoBackup", value: true, type: "boolean", updatedAt: new Date() },
+        { key: "backupFrequency", value: "weekly", type: "string", updatedAt: new Date() },
+      ]
+
+      await this.appSettings.bulkAdd(defaultSettings)
+    }
+  }
+
+  // Database Management Methods
+  async exportAllData() {
+    const data = {
+      version: "1.0.0",
+      exportDate: new Date().toISOString(),
+      transactions: await this.transactions.toArray(),
+      budgets: await this.budgets.toArray(),
+      categories: await this.categories.toArray(),
+      appSettings: await this.appSettings.toArray(),
+    }
+    return data
+  }
+
+  async importData(data: any) {
+    try {
+      // Clear existing data
+      await this.transactions.clear()
+      await this.budgets.clear()
+      await this.categories.clear()
+      await this.appSettings.clear()
+
+      // Import new data
+      if (data.transactions) {
+        await this.transactions.bulkAdd(data.transactions)
+      }
+      if (data.budgets) {
+        await this.budgets.bulkAdd(data.budgets)
+      }
+      if (data.categories) {
+        await this.categories.bulkAdd(data.categories)
+      }
+      if (data.appSettings) {
+        await this.appSettings.bulkAdd(data.appSettings)
+      }
+    } catch (error) {
+      console.error("Failed to import data:", error)
+      throw new Error(`Failed to import data: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
+  }
+
+  async createBackup(name: string, description?: string) {
+    const data = await this.exportAllData()
+    const backup: Omit<DataBackup, "id"> = {
+      name,
+      description,
+      data,
+      version: "1.0.0",
+      createdAt: new Date(),
+    }
+    return await this.dataBackups.add(backup)
+  }
+
+  async restoreBackup(backupId: number) {
+    const backup = await this.dataBackups.get(backupId)
+    if (!backup) throw new Error("Backup not found")
+    
+    await this.importData(backup.data)
+    return backup
+  }
+
+  async getBackups() {
+    return await this.dataBackups.orderBy("createdAt").reverse().toArray()
+  }
+
+  async deleteBackup(backupId: number) {
+    return await this.dataBackups.delete(backupId)
+  }
+
+  async clearAllData() {
+    try {
+      // Clear each table individually with error handling
+      console.log("Starting to clear all data...")
+      
+      try {
+        await this.transactions.clear()
+        console.log("✓ Transactions cleared")
+      } catch (error) {
+        console.warn("Failed to clear transactions:", error)
+      }
+      
+      try {
+        await this.budgets.clear()
+        console.log("✓ Budgets cleared")
+      } catch (error) {
+        console.warn("Failed to clear budgets:", error)
+      }
+      
+      try {
+        await this.categories.clear()
+        console.log("✓ Categories cleared")
+      } catch (error) {
+        console.warn("Failed to clear categories:", error)
+      }
+      
+      try {
+        await this.appSettings.clear()
+        console.log("✓ App settings cleared")
+      } catch (error) {
+        console.warn("Failed to clear app settings:", error)
+      }
+      
+      try {
+        await this.dataBackups.clear()
+        console.log("✓ Backups cleared")
+      } catch (error) {
+        console.warn("Failed to clear backups:", error)
+      }
+      
+      console.log("✓ All data cleared successfully")
+    } catch (error) {
+      console.error("Failed to clear all data:", error)
+      throw new Error(`Failed to clear database: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
+  }
+
+  async getDatabaseStats() {
+    return {
+      transactions: await this.transactions.count(),
+      budgets: await this.budgets.count(),
+      categories: await this.categories.count(),
+      appSettings: await this.appSettings.count(),
+      backups: await this.dataBackups.count(),
     }
   }
 }

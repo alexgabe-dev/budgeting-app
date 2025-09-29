@@ -1,16 +1,19 @@
 "use client"
 
-import { useEffect, useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts"
 import { useTransactionStore } from "@/lib/store"
 import { useSettingsStore, formatCurrency } from "@/lib/settings-store"
 import { motion } from "framer-motion"
+import { ChevronDown, ChevronUp } from "lucide-react"
 
 export function SpendingBreakdownChart() {
   const { transactions, categories, loadTransactions, loadCategories } = useTransactionStore()
   const { settings } = useSettingsStore()
   const isCompact = settings.compactMode
+  const [showAllCategories, setShowAllCategories] = useState(false)
 
   useEffect(() => {
     loadTransactions()
@@ -53,7 +56,6 @@ export function SpendingBreakdownChart() {
         }
       })
       .sort((a, b) => b.value - a.value)
-      .slice(0, 8) // Show top 8 categories
       .map((item, _, array) => {
         const total = array.reduce((sum, cat) => sum + cat.value, 0)
         return {
@@ -64,6 +66,10 @@ export function SpendingBreakdownChart() {
   }, [transactions, categories])
 
   const totalSpending = chartData.reduce((sum, item) => sum + item.value, 0)
+  
+  // Show only top 3 categories initially, or all if showAllCategories is true
+  const displayedCategories = showAllCategories ? chartData : chartData.slice(0, 3)
+  const hasMoreCategories = chartData.length > 3
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
@@ -158,34 +164,71 @@ export function SpendingBreakdownChart() {
               </ResponsiveContainer>
               
               {/* Category List */}
-              <div className={`space-y-2 ${isCompact ? 'max-h-32' : 'max-h-40'} overflow-y-auto`}>
-                {chartData.map((item, index) => (
-                  <motion.div
-                    key={item.name}
-                    className="flex items-center justify-between p-2 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.3, delay: index * 0.1 }}
-                  >
-                    <div className="flex items-center space-x-2">
-                      <div 
-                        className={`${isCompact ? 'w-3 h-3' : 'w-4 h-4'} rounded-full`}
-                        style={{ backgroundColor: item.color }}
-                      />
-                      <span className={`${isCompact ? 'text-sm' : 'text-base'} font-medium text-foreground`}>
-                        {item.name}
-                      </span>
-                    </div>
-                    <div className="text-right">
-                      <p className={`${isCompact ? 'text-sm' : 'text-base'} font-semibold text-foreground`}>
-                        {formatCurrency(item.value, settings.currency, settings.showCents)}
-                      </p>
-                      <p className={`${isCompact ? 'text-xs' : 'text-sm'} text-muted-foreground`}>
-                        {item.percentage.toFixed(1)}%
-                      </p>
-                    </div>
-                  </motion.div>
-                ))}
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  {displayedCategories.map((item, index) => (
+                    <motion.div
+                      key={item.name}
+                      className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.3, delay: index * 0.1 }}
+                    >
+                      <div className="flex items-center space-x-3">
+                        <div 
+                          className={`${isCompact ? 'w-3 h-3' : 'w-4 h-4'} rounded-full border-2 border-background shadow-sm`}
+                          style={{ backgroundColor: item.color }}
+                        />
+                        <div className="flex flex-col">
+                          <span className={`${isCompact ? 'text-sm' : 'text-base'} font-medium text-foreground`}>
+                            {item.name}
+                          </span>
+                          <span className={`${isCompact ? 'text-xs' : 'text-sm'} text-muted-foreground`}>
+                            {item.percentage.toFixed(1)}% of total
+                          </span>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className={`${isCompact ? 'text-sm' : 'text-base'} font-semibold text-foreground`}>
+                          {formatCurrency(item.value, settings.currency, settings.showCents)}
+                        </p>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+
+                {/* Show More/Less Button */}
+                {hasMoreCategories && (
+                  <div className="flex justify-center pt-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowAllCategories(!showAllCategories)}
+                      className="flex items-center space-x-2"
+                    >
+                      {showAllCategories ? (
+                        <>
+                          <ChevronUp className="h-4 w-4" />
+                          <span>Show Less</span>
+                        </>
+                      ) : (
+                        <>
+                          <ChevronDown className="h-4 w-4" />
+                          <span>Show {chartData.length - 3} More</span>
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                )}
+
+                {/* Summary for hidden categories */}
+                {!showAllCategories && hasMoreCategories && (
+                  <div className="text-center pt-2 border-t border-border">
+                    <span className={`text-muted-foreground ${isCompact ? 'text-xs' : 'text-sm'}`}>
+                      +{chartData.length - 3} more categories
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           )}

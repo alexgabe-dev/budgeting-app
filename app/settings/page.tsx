@@ -528,7 +528,13 @@ export default function SettingsPage() {
               <div className="pt-4">
                 <Button 
                   variant="destructive" 
-                  onClick={resetSettings}
+                  onClick={() => 
+                    handleSettingChange(
+                      "All Settings",
+                      "default values",
+                      () => resetSettings()
+                    )
+                  }
                   className="w-full"
                 >
                   <RotateCcw className="h-4 w-4 mr-2" />
@@ -544,15 +550,24 @@ export default function SettingsPage() {
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirm Setting Change</AlertDialogTitle>
+            <AlertDialogTitle>
+              {pendingChange?.type === "All Settings" ? "Reset All Settings" : "Confirm Setting Change"}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to change the {pendingChange?.type} setting to "{pendingChange?.value}"? 
-              This change will be applied immediately.
+              {pendingChange?.type === "All Settings" 
+                ? "Are you sure you want to reset all settings to their default values? This action cannot be undone and will affect all your preferences."
+                : `Are you sure you want to change the ${pendingChange?.type} setting to "${pendingChange?.value}"? This change will be applied immediately.`
+              }
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={cancelChange}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmChange}>Confirm</AlertDialogAction>
+            <AlertDialogAction 
+              onClick={confirmChange}
+              className={pendingChange?.type === "All Settings" ? "bg-destructive hover:bg-destructive/90" : ""}
+            >
+              {pendingChange?.type === "All Settings" ? "Reset All Settings" : "Confirm"}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

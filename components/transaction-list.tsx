@@ -4,8 +4,10 @@ import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import {
   MoreHorizontal,
   Search,
@@ -38,12 +40,23 @@ const iconMap = {
 }
 
 export function TransactionList() {
-  const { transactions, categories, isLoading, loadTransactions, loadCategories, deleteTransaction } =
+  const { transactions, categories, isLoading, loadTransactions, loadCategories, deleteTransaction, updateTransaction } =
     useTransactionStore()
   const { settings } = useSettingsStore()
   const [searchTerm, setSearchTerm] = useState("")
   const [categoryFilter, setCategoryFilter] = useState("all")
   const [typeFilter, setTypeFilter] = useState("all")
+  
+  // Edit dialog state
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [editingTransaction, setEditingTransaction] = useState<any>(null)
+  const [editForm, setEditForm] = useState({
+    description: "",
+    amount: "",
+    category: "",
+    type: "expense" as "income" | "expense",
+    date: ""
+  })
 
   useEffect(() => {
     loadTransactions()
@@ -62,6 +75,50 @@ export function TransactionList() {
     if (window.confirm("Are you sure you want to delete this transaction?")) {
       await deleteTransaction(id)
     }
+  }
+
+  const handleEdit = (transaction: any) => {
+    setEditingTransaction(transaction)
+    setEditForm({
+      description: transaction.description,
+      amount: Math.abs(transaction.amount).toString(),
+      category: transaction.category,
+      type: transaction.type,
+      date: new Date(transaction.date).toISOString().split('T')[0]
+    })
+    setIsEditDialogOpen(true)
+  }
+
+  const handleSaveEdit = async () => {
+    if (!editingTransaction?.id) return
+
+    const amount = parseFloat(editForm.amount)
+    if (isNaN(amount)) return
+
+    const finalAmount = editForm.type === "expense" ? -amount : amount
+
+    await updateTransaction(editingTransaction.id, {
+      description: editForm.description,
+      amount: finalAmount,
+      category: editForm.category,
+      type: editForm.type,
+      date: new Date(editForm.date)
+    })
+
+    setIsEditDialogOpen(false)
+    setEditingTransaction(null)
+  }
+
+  const handleCancelEdit = () => {
+    setIsEditDialogOpen(false)
+    setEditingTransaction(null)
+    setEditForm({
+      description: "",
+      amount: "",
+      category: "",
+      type: "expense",
+      date: ""
+    })
   }
 
   const getCategoryIcon = (categoryName: string) => {
@@ -83,6 +140,7 @@ export function TransactionList() {
   }
 
   return (
+    <>
     <Card className="bg-card border-border">
       <CardHeader>
         <CardTitle className="text-foreground">All Transactions</CardTitle>
@@ -188,7 +246,7 @@ export function TransactionList() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleEdit(transaction)}>
                           <Edit className="w-4 h-4 mr-2" />
                           Edit
                         </DropdownMenuItem>
@@ -209,5 +267,101 @@ export function TransactionList() {
         )}
       </CardContent>
     </Card>
+
+    {/* Edit Transaction Dialog */}
+    <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Edit Transaction</DialogTitle>
+          <DialogDescription>
+            Make changes to your transaction here. Click save when you're done.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="edit-description" className="text-right">
+              Description
+            </Label>
+            <Input
+              id="edit-description"
+              value={editForm.description}
+              onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+              className="col-span-3"
+            />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="edit-amount" className="text-right">
+              Amount
+            </Label>
+            <Input
+              id="edit-amount"
+              type="number"
+              step="0.01"
+              value={editForm.amount}
+              onChange={(e) => setEditForm({ ...editForm, amount: e.target.value })}
+              className="col-span-3"
+            />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="edit-category" className="text-right">
+              Category
+            </Label>
+            <Select
+              value={editForm.category}
+              onValueChange={(value) => setEditForm({ ...editForm, category: value })}
+            >
+              <SelectTrigger className="col-span-3">
+                <SelectValue placeholder="Select category" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((category) => (
+                  <SelectItem key={category.id} value={category.name}>
+                    {category.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="edit-type" className="text-right">
+              Type
+            </Label>
+            <Select
+              value={editForm.type}
+              onValueChange={(value: "income" | "expense") => setEditForm({ ...editForm, type: value })}
+            >
+              <SelectTrigger className="col-span-3">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="expense">Expense</SelectItem>
+                <SelectItem value="income">Income</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="edit-date" className="text-right">
+              Date
+            </Label>
+            <Input
+              id="edit-date"
+              type="date"
+              value={editForm.date}
+              onChange={(e) => setEditForm({ ...editForm, date: e.target.value })}
+              className="col-span-3"
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={handleCancelEdit}>
+            Cancel
+          </Button>
+          <Button type="button" onClick={handleSaveEdit}>
+            Save changes
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   )
 }
